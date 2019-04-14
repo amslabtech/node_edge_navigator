@@ -1,0 +1,7 @@
+<launch>
+
+	<node pkg="node_edge_navigator" type="node_edge_navigator" name="node_edge_navigator">
+		<param name="HZ" value="50"/> 
+	</node>
+
+</launch>
