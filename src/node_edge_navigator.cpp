@@ -9,6 +9,7 @@
 #include "amsl_navigation_msgs/Node.h"
 #include "amsl_navigation_msgs/Edge.h"
 #include "amsl_navigation_msgs/NodeEdgeMap.h"
+#include "amsl_navigation_msgs/UpdateNode.h"
 
 class NodeEdgeNavigator
 {
@@ -22,9 +23,11 @@ public:
 	void process(void);
 	void get_node_from_id(int, amsl_navigation_msgs::Node&);
 	double pi_2_pi(double);
+	void request_replanning(void);
 
 private:
 	double HZ;
+	double EXCESS_DETECTION_RATIO;
 
 	ros::NodeHandle nh;
 	ros::NodeHandle private_nh;
@@ -34,6 +37,7 @@ private:
 	ros::Subscriber path_sub;
 	ros::Subscriber pose_sub;
 	ros::Subscriber edge_sub;
+	ros::ServiceClient node_client; 
 
 	tf::TransformListener listener;
 	tf::StampedTransform transform;
@@ -66,8 +70,10 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
 	path_sub = nh.subscribe("/global_path", 1, &NodeEdgeNavigator::path_callback, this);
 	pose_sub = nh.subscribe("/estimated_pose/pose", 1, &NodeEdgeNavigator::pose_callback, this);
 	edge_sub = nh.subscribe("/estimated_pose/edge", 1, &NodeEdgeNavigator::edge_callback, this);
+	node_client = nh.serviceClient<amsl_navigation_msgs::UpdateNode>("/node_edge_map/update_node");
 
 	private_nh.param("HZ", HZ, {50});
+	private_nh.param("EXCESS_DETECTION_RATIO", EXCESS_DETECTION_RATIO, {1.2});
 
 	map_subscribed = false;
 	global_path_subscribed = false;
@@ -132,7 +138,8 @@ void NodeEdgeNavigator::process(void)
 					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.orientation);
 					target_node_direction = pi_2_pi(target_node_direction);
 					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
-
+					// excess detection
+					request_replanning();
 				}else{
 					// default
 					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.position.y, target_node.point.x - estimated_pose.pose.position.x);
@@ -143,7 +150,6 @@ void NodeEdgeNavigator::process(void)
 				direction.pose.position = estimated_pose.pose.position;
 				direction.header = estimated_pose.header; 
 				direction_pub.publish(direction);
-				// excess detection
 
 				pose_updated = false;
 				edge_updated = false;
@@ -167,4 +173,30 @@ void NodeEdgeNavigator::get_node_from_id(int id, amsl_navigation_msgs::Node& nod
 double NodeEdgeNavigator::pi_2_pi(double angle)
 {
 	return atan2(sin(angle), cos(angle));
+}
+
+void NodeEdgeNavigator::request_replanning(void)
+{
+	if(edge.progress >= EXCESS_DETECTION_RATIO){
+		amsl_navigation_msgs::Node node;
+		int id = 1000;
+		for(auto it=map.nodes.begin();it!=map.nodes.end();++it){
+			if(it->id != id){
+				break;
+			}
+			id++;
+		}
+		node.id = id;
+		node.label = "replanning";
+		node.type = "coordinate";
+		node.point = estimated_pose.pose.position;
+		amsl_navigation_msgs::UpdateNode node_service;
+		node_service.request.node = node;
+		node_service.request.operation = node_service.request.ADD;
+		if(node_client.call(node_service)){
+			std::cout << "node added to map" << std::endl;
+		}else{
+			std::cout << "failed to call service" << std::endl;
+		}
+	}
 }
