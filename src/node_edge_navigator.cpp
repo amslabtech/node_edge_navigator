@@ -115,14 +115,31 @@ void NodeEdgeNavigator::process(void)
 				if(global_path_ids.empty()){
 					// goal
 				}
+				geometry_msgs::PoseStamped direction;
 				amsl_navigation_msgs::Node target_node;
 				get_node_from_id(global_path_ids[0], target_node);
-				// caluculate target node direction
-				double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.position.y, target_node.point.x - estimated_pose.pose.position.x);
-				double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.orientation);
-				target_node_direction = pi_2_pi(target_node_direction);
-				geometry_msgs::PoseStamped direction;
-				direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+				if((target_node.type == "coordinate") || (target_node.type == "gps")){
+					// caluculate target node direction
+					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.position.y, target_node.point.x - estimated_pose.pose.position.x);
+					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.orientation);
+					target_node_direction = pi_2_pi(target_node_direction);
+					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+				}else if(target_node.type == "intersection"){
+					// caluculate target node direction
+					amsl_navigation_msgs::Node last_node;
+					get_node_from_id(edge.node0_id, last_node);
+					double global_node_direction = atan2(target_node.point.y - last_node.point.y, target_node.point.x - last_node.point.x);
+					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.orientation);
+					target_node_direction = pi_2_pi(target_node_direction);
+					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+
+				}else{
+					// default
+					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.position.y, target_node.point.x - estimated_pose.pose.position.x);
+					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.orientation);
+					target_node_direction = pi_2_pi(target_node_direction);
+					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+				}
 				direction.pose.position = estimated_pose.pose.position;
 				direction.header = estimated_pose.header; 
 				direction_pub.publish(direction);
