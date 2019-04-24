@@ -1,7 +1,6 @@
 #include <ros/ros.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <std_msgs/Float64.h>
 #include <tf/tf.h>
 
 nav_msgs::OccupancyGrid local_map;
@@ -10,16 +9,25 @@ bool target_received = false;
 float target_orientation = 0.0;
 double longest_path_length_angle = 0.0;
 
-void TargetCallback(const std_msgs::Float64ConstPtr& msg)
+float get_yaw(geometry_msgs::Quaternion q)
 {
-  target_orientation = msg->data;
-  target_received = true;
+	double r, p, y;
+	tf::Quaternion quat(q.x, q.y, q.z, q.w);
+	tf::Matrix3x3(quat).getRPY(r, p,y);
+	return y;
+}
+
+void TargetCallback(const geometry_msgs::PoseStampedConstPtr& msg)
+{
+	geometry_msgs::PoseStamped target = *msg;
+	target_orientation = get_yaw(target.pose.orientation);
+	target_received = true;
 }
 
 void MapCallback(const nav_msgs::OccupancyGridConstPtr& msg)
 {
-  local_map = *msg;
-  map_received = true;
+	local_map = *msg;
+	map_received = true;
 }
 
 void detection_main(geometry_msgs::PoseStamped& goal)
@@ -33,32 +41,32 @@ void detection_main(geometry_msgs::PoseStamped& goal)
 
 void LocalGoalCreator()
 {
-  ros::NodeHandle nh;
-  ros::Subscriber sub_map = nh.subscribe("/local_map", 1, MapCallback);
-  ros::Subscriber sub_target = nh.subscribe("/direction/relative", 1, TargetCallback);
-  
-  ros::Publisher pub_goal = nh.advertise<geometry_msgs::PoseStamped>("/local_goal",1);
+	ros::NodeHandle nh;
+	ros::Subscriber sub_map = nh.subscribe("/local_map", 1, MapCallback);
+	ros::Subscriber sub_target = nh.subscribe("/direction/relative", 1, TargetCallback);
 
-  geometry_msgs::PoseStamped local_goal;
+	ros::Publisher pub_goal = nh.advertise<geometry_msgs::PoseStamped>("/local_goal",1);
 
-  ros::Rate loop_rate(10);
-  while(ros::ok()){
-	if(map_received && target_received){
-	  detection_main(local_goal);
-	  pub_goal.publish(local_goal);
+	geometry_msgs::PoseStamped local_goal;
+
+	ros::Rate loop_rate(10);
+	while(ros::ok()){
+		if(map_received && target_received){
+			detection_main(local_goal);
+			pub_goal.publish(local_goal);
+		}
+		else{
+			std::cout << "map:" << map_received << " target:" << target_received << std::endl;
+		}
+		ros::spinOnce();
+		loop_rate.sleep();
 	}
-	else{
-	  std::cout << "map:" << map_received << " target:" << target_received << std::endl;
-	}
-	ros::spinOnce();
-	loop_rate.sleep();
-  }
 }
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "local_goal_creator");
-  LocalGoalCreator();
-  ROS_INFO("Killing now!!!!!");
-  return 0;
+	ros::init(argc, argv, "local_goal_creator");
+	LocalGoalCreator();
+	ROS_INFO("Killing now!!!!!");
+	return 0;
 }
