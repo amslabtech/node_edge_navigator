@@ -5,6 +5,7 @@
 
 #include <std_msgs/Int32MultiArray.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 
 #include "amsl_navigation_msgs/Node.h"
 #include "amsl_navigation_msgs/Edge.h"
@@ -20,7 +21,7 @@ public:
 
 	void map_callback(const amsl_navigation_msgs::NodeEdgeMapConstPtr&);
 	void path_callback(const std_msgs::Int32MultiArrayConstPtr&);
-	void pose_callback(const geometry_msgs::PoseStampedConstPtr&);
+	void pose_callback(const nav_msgs::OdometryConstPtr&);
 	void edge_callback(const amsl_navigation_msgs::EdgeConstPtr&);
 	void process(void);
 	void get_node_from_id(int, amsl_navigation_msgs::Node&);
@@ -48,7 +49,7 @@ private:
 
 	amsl_navigation_msgs::NodeEdgeMap map;
 	std::vector<int> global_path_ids;
-	geometry_msgs::PoseStamped estimated_pose;
+	nav_msgs::Odometry estimated_pose;
 	amsl_navigation_msgs::Edge edge;
 
 	bool map_subscribed;
@@ -70,7 +71,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
 	: private_nh("~")
 {
 	direction_pub = nh.advertise<geometry_msgs::PoseStamped>("/direction/relative", 1);
-	map_sub = nh.subscribe("/node_edge_map", 1, &NodeEdgeNavigator::map_callback, this);
+	map_sub = nh.subscribe("/node_edge_map/map", 1, &NodeEdgeNavigator::map_callback, this);
 	path_sub = nh.subscribe("/global_path", 1, &NodeEdgeNavigator::path_callback, this);
 	pose_sub = nh.subscribe("/estimated_pose/pose", 1, &NodeEdgeNavigator::pose_callback, this);
 	edge_sub = nh.subscribe("/estimated_pose/edge", 1, &NodeEdgeNavigator::edge_callback, this);
@@ -102,7 +103,7 @@ void NodeEdgeNavigator::path_callback(const std_msgs::Int32MultiArrayConstPtr& m
 	global_path_subscribed = true;
 }
 
-void NodeEdgeNavigator::pose_callback(const geometry_msgs::PoseStampedConstPtr& msg)
+void NodeEdgeNavigator::pose_callback(const nav_msgs::OdometryConstPtr& msg)
 {
 	estimated_pose = *msg;
 	pose_updated = true;
@@ -133,8 +134,8 @@ void NodeEdgeNavigator::process(void)
 				get_node_from_id(global_path_ids[0], target_node);
 				if((target_node.type == "coordinate") || (target_node.type == "gps")){
 					// caluculate target node direction
-					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.position.y, target_node.point.x - estimated_pose.pose.position.x);
-					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.orientation);
+					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
+					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
 					target_node_direction = pi_2_pi(target_node_direction);
 					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
 				}else if(target_node.type == "intersection"){
@@ -142,7 +143,7 @@ void NodeEdgeNavigator::process(void)
 					amsl_navigation_msgs::Node last_node;
 					get_node_from_id(edge.node0_id, last_node);
 					double global_node_direction = atan2(target_node.point.y - last_node.point.y, target_node.point.x - last_node.point.x);
-					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.orientation);
+					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
 					target_node_direction = pi_2_pi(target_node_direction);
 					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
 					// excess detection
@@ -152,12 +153,12 @@ void NodeEdgeNavigator::process(void)
 					}
 				}else{
 					// default
-					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.position.y, target_node.point.x - estimated_pose.pose.position.x);
-					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.orientation);
+					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
+					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
 					target_node_direction = pi_2_pi(target_node_direction);
 					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
 				}
-				direction.pose.position = estimated_pose.pose.position;
+				direction.pose.position = estimated_pose.pose.pose.position;
 				direction.header = estimated_pose.header; 
 				direction_pub.publish(direction);
 
@@ -198,7 +199,7 @@ void NodeEdgeNavigator::request_replanning(void)
 	node.id = id;
 	node.label = "replanning";
 	node.type = "coordinate";
-	node.point = estimated_pose.pose.position;
+	node.point = estimated_pose.pose.pose.position;
 	amsl_navigation_msgs::UpdateNode node_service;
 	node_service.request.node = node;
 	node_service.request.operation = node_service.request.ADD;
