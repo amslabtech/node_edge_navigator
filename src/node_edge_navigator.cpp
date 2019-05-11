@@ -90,6 +90,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
 	std::cout << "=== node_edge_navigator ===" << std::endl;
 	std::cout << "HZ: " << HZ << std::endl;
 	std::cout << "EXCESS_DETECTION_RATIO: " << EXCESS_DETECTION_RATIO << std::endl;
+	std::cout << std::endl;
 }
 
 void NodeEdgeNavigator::map_callback(const amsl_navigation_msgs::NodeEdgeMapConstPtr& msg)
@@ -121,8 +122,10 @@ void NodeEdgeNavigator::process(void)
 	ros::Rate loop_rate(HZ);
 	while(ros::ok()){
 		if(map_subscribed && global_path_subscribed){
-			std::cout << pose_updated << ", " << edge_updated << std::endl;
+			// std::cout << pose_updated << ", " << edge_updated << std::endl;
 			if(pose_updated && edge_updated){
+				std::cout << "=== node_edge_navigator ===" << std::endl;
+				double start_time = ros::Time::now().toSec();
 				if(global_path_ids[0] == edge.node0_id){
 					// arrived 
 					global_path_ids.erase(global_path_ids.begin());
@@ -133,6 +136,7 @@ void NodeEdgeNavigator::process(void)
 				geometry_msgs::PoseStamped direction;
 				amsl_navigation_msgs::Node target_node;
 				get_node_from_id(global_path_ids[0], target_node);
+				std::cout << "target node: \n" << target_node << std::endl;
 				if((target_node.type == "coordinate") || (target_node.type == "gps")){
 					// caluculate target node direction
 					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
@@ -144,6 +148,7 @@ void NodeEdgeNavigator::process(void)
 					amsl_navigation_msgs::Node last_node;
 					get_node_from_id(edge.node0_id, last_node);
 					double global_node_direction = atan2(target_node.point.y - last_node.point.y, target_node.point.x - last_node.point.x);
+					std::cout << "edge direction: " << global_node_direction << "[rad]" << std::endl;
 					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
 					target_node_direction = pi_2_pi(target_node_direction);
 					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
@@ -159,12 +164,17 @@ void NodeEdgeNavigator::process(void)
 					target_node_direction = pi_2_pi(target_node_direction);
 					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
 				}
-				direction.pose.position = estimated_pose.pose.pose.position;
-				direction.header = estimated_pose.header; 
+				std::cout << "direction: " << tf::getYaw(direction.pose.orientation) << "[rad]" << std::endl;
+				// direction.pose.position = estimated_pose.pose.pose.position;
+				direction.header.frame_id = "base_link"; 
+				direction.header.stamp = ros::Time::now();
 				direction_pub.publish(direction);
 
 				pose_updated = false;
 				edge_updated = false;
+				std::cout << "process time: " << ros::Time::now().toSec() - start_time << "[s]" << std::endl;
+			}else{
+				std::cout << "\033[1A" << "waiting for pose and edge estimation update" << std::endl;
 			}
 		}
 		ros::spinOnce();
