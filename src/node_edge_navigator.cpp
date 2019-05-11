@@ -89,6 +89,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
 
 	std::cout << "=== node_edge_navigator ===" << std::endl;
 	std::cout << "HZ: " << HZ << std::endl;
+	std::cout << "EXCESS_DETECTION_RATIO: " << EXCESS_DETECTION_RATIO << std::endl;
 }
 
 void NodeEdgeNavigator::map_callback(const amsl_navigation_msgs::NodeEdgeMapConstPtr& msg)
