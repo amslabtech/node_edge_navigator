@@ -30,10 +30,12 @@ public:
 	double pi_2_pi(double);
 	void request_replanning(void);
 	void arrived_at_node(void);
+	double get_distance_from_points(const geometry_msgs::Point&, const geometry_msgs::Point&);
 
 private:
 	double HZ;
 	double EXCESS_DETECTION_RATIO;
+	double GOAL_RADIUS;
 
 	ros::NodeHandle nh;
 	ros::NodeHandle private_nh;
@@ -87,6 +89,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
 
 	private_nh.param("HZ", HZ, {50});
 	private_nh.param("EXCESS_DETECTION_RATIO", EXCESS_DETECTION_RATIO, {1.2});
+	private_nh.param("GOAL_RADIUS", GOAL_RADIUS, {50});
 
 	map_subscribed = false;
 	global_path_subscribed = false;
@@ -96,6 +99,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
 	std::cout << "=== node_edge_navigator ===" << std::endl;
 	std::cout << "HZ: " << HZ << std::endl;
 	std::cout << "EXCESS_DETECTION_RATIO: " << EXCESS_DETECTION_RATIO << std::endl;
+	std::cout << "GOAL_RADIUS: " << GOAL_RADIUS << std::endl;
 	std::cout << std::endl;
 }
 
@@ -147,6 +151,12 @@ void NodeEdgeNavigator::process(void)
 				get_node_from_id(global_path_ids[0], target_node);
 				std::cout << "target node: \n" << target_node << std::endl;
 				if((target_node.type == "position") || (target_node.type == "gps")){
+					double distance = get_distance_from_points(target_node.point, estimated_pose.pose.pose.position); 
+					if(distance <= GOAL_RADIUS){
+						arrived_at_node();
+						// update target node
+						get_node_from_id(global_path_ids[0], target_node);
+					}
 					// caluculate target node direction
 					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
 					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
@@ -266,4 +276,9 @@ void NodeEdgeNavigator::arrived_at_node(void)
 	std::cout << "arrived at node: \n" << node << std::endl;
 	global_path_ids.erase(global_path_ids.begin());
 	std::cout << "the begin element of global path was deleted" << std::endl;
+}
+
+double NodeEdgeNavigator::get_distance_from_points(const geometry_msgs::Point& p0, const geometry_msgs::Point& p1)
+{
+	return sqrt((p0.x - p1.x) * (p0.x - p1.x) + (p0.y - p1.y) * (p0.y - p1.y));
 }
