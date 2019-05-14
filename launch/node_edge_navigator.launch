@@ -1,8 +1,11 @@
 <launch>
 
+	<arg name="hz" default="50"/>
+	<arg name="excess_detection_ratio" default="1.2"/>
+
 	<node pkg="node_edge_navigator" type="node_edge_navigator" name="node_edge_navigator">
-		<param name="HZ" value="50"/> 
-		<param name="EXCESS_DETECTION_RATIO" value="1.2"/> 
+		<param name="HZ" value="$(arg hz)"/> 
+		<param name="EXCESS_DETECTION_RATIO" value="$(arg excess_detection_ratio)"/> 
 	</node>
 
 </launch>
