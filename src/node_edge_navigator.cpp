@@ -137,7 +137,7 @@ void NodeEdgeNavigator::process(void)
 				amsl_navigation_msgs::Node target_node;
 				get_node_from_id(global_path_ids[0], target_node);
 				std::cout << "target node: \n" << target_node << std::endl;
-				if((target_node.type == "coordinate") || (target_node.type == "gps")){
+				if((target_node.type == "position") || (target_node.type == "gps")){
 					// caluculate target node direction
 					double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
 					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
@@ -209,7 +209,7 @@ void NodeEdgeNavigator::request_replanning(void)
 	}
 	node.id = id;
 	node.label = "replanning";
-	node.type = "coordinate";
+	node.type = "position";
 	node.point = estimated_pose.pose.pose.position;
 	amsl_navigation_msgs::UpdateNode node_service;
 	node_service.request.node = node;
