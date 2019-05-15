@@ -56,7 +56,7 @@ private:
 	amsl_navigation_msgs::NodeEdgeMap map;
 	std::vector<int> global_path_ids;
 	nav_msgs::Odometry estimated_pose;
-	amsl_navigation_msgs::Edge edge;
+	amsl_navigation_msgs::Edge estimated_edge;
 
 	bool map_subscribed;
 	bool global_path_subscribed;
@@ -125,7 +125,7 @@ void NodeEdgeNavigator::pose_callback(const nav_msgs::OdometryConstPtr& msg)
 
 void NodeEdgeNavigator::edge_callback(const amsl_navigation_msgs::EdgeConstPtr& msg)
 {
-	edge = *msg;
+	estimated_edge = *msg;
 	edge_updated = true;
 }
 
@@ -173,14 +173,14 @@ void NodeEdgeNavigator::process(void)
 					}
 					// caluculate target node direction
 					amsl_navigation_msgs::Node last_node;
-					get_node_from_id(edge.node0_id, last_node);
+					get_node_from_id(estimated_edge.node0_id, last_node);
 					double global_node_direction = atan2(target_node.point.y - last_node.point.y, target_node.point.x - last_node.point.x);
 					std::cout << "edge direction: " << global_node_direction << "[rad]" << std::endl;
 					double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
 					target_node_direction = pi_2_pi(target_node_direction);
 					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
 					// excess detection
-					if(edge.progress >= EXCESS_DETECTION_RATIO){
+					if(estimated_edge.progress >= EXCESS_DETECTION_RATIO){
 						std::cout << "intersection excession is detected" << std::endl;
 						request_replanning();
 					}
@@ -252,8 +252,8 @@ void NodeEdgeNavigator::request_replanning(void)
 	}
 	amsl_navigation_msgs::Edge new_edge;
 	new_edge.node0_id = node.id;
-	new_edge.node1_id = edge.node1_id;
-	new_edge.distance = edge.distance * (edge.progress - 1);
+	new_edge.node1_id = estimated_edge.node1_id;
+	new_edge.distance = estimated_edge.distance * (estimated_edge.progress - 1);
 	amsl_navigation_msgs::UpdateEdge edge_service;
 	edge_service.request.edge = new_edge;
 	edge_service.request.operation = edge_service.request.ADD;
