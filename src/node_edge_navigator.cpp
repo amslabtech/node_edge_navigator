@@ -148,6 +148,11 @@ void NodeEdgeNavigator::process(void)
 					// goal
 					std::cout << "global path is empty" << std::endl;
 				}
+				if(global_path_ids.size() > 1){
+					if(global_path_ids[0] == estimated_edge.node0_id && global_path_ids[1] == estimated_edge.node1_id){
+						global_path_ids.erase(global_path_ids.begin());
+					}
+				}
 				geometry_msgs::PoseStamped direction;
 				amsl_navigation_msgs::Node target_node;
 				get_node_from_id(global_path_ids[0], target_node);
@@ -191,7 +196,7 @@ void NodeEdgeNavigator::process(void)
 					target_node_direction = pi_2_pi(target_node_direction);
 					direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
 				}
-				std::cout << "target node:\n" << target_node << std::endl;
+				//std::cout << "target node:\n" << target_node << std::endl;
 				std::cout << "direction: " << tf::getYaw(direction.pose.orientation) << "[rad]" << std::endl;
 				// direction.pose.position = estimated_pose.pose.pose.position;
 				direction.header.frame_id = "base_link"; 
