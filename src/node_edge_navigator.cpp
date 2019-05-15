@@ -114,6 +114,7 @@ void NodeEdgeNavigator::path_callback(const std_msgs::Int32MultiArrayConstPtr& m
 {
 	global_path_ids = msg->data;
 	global_path_subscribed = true;
+	std::cout << "received global path" << std::endl;
 }
 
 void NodeEdgeNavigator::pose_callback(const nav_msgs::OdometryConstPtr& msg)
@@ -145,6 +146,7 @@ void NodeEdgeNavigator::process(void)
 				double start_time = ros::Time::now().toSec();
 				if(global_path_ids.empty()){
 					// goal
+					std::cout << "global path is empty" << std::endl;
 				}
 				geometry_msgs::PoseStamped direction;
 				amsl_navigation_msgs::Node target_node;
@@ -202,6 +204,8 @@ void NodeEdgeNavigator::process(void)
 			}else{
 				std::cout << "\033[1A" << "waiting for pose and edge estimation update" << std::endl;
 			}
+		}else{
+			std::cout << "\033[1A" << "waiting for map and global path" << std::endl;
 		}
 		ros::spinOnce();
 		loop_rate.sleep();
