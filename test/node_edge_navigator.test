@@ -1,0 +1,9 @@
+<launch>
+
+	<include file="$(find amsl_navigation_managers)/launch/amsl_navigation_managers.launch"/>
+
+	<include file="$(find node_edge_navigator)/launch/node_edge_navigator.launch"/>
+
+	<test pkg="node_edge_navigator" type="node_edge_navigator_test" test-name="node_edge_navigator_test"/> 
+
+</launch>

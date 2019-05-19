@@ -209,3 +209,12 @@ target_link_libraries(local_goal_creator
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if(CATKIN_ENABLE_TESTING)
+	find_package(rostest REQUIRED)
+	add_rostest_gtest(node_edge_navigator_test 
+		test/node_edge_navigator.test
+		test/node_edge_navigator_test.cpp
+	)
+	target_link_libraries(node_edge_navigator_test ${catkin_LIBRARIES})
+endif()
