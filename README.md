@@ -1,5 +1,7 @@
 # node_edge_navigator
 
+[![Build Status](https://travis-ci.org/amslabtech/node_edge_navigator.svg?branch=master)](https://travis-ci.org/amslabtech/node_edge_navigator)
+
 ## node_edge_navigator
 ### Published topics
 - /direction/relative (geometry_msgs/PoseStamped)
