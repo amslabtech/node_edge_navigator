@@ -80,7 +80,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
 {
     direction_pub = nh.advertise<geometry_msgs::PoseStamped>("/direction/relative", 1);
     map_sub = nh.subscribe("/node_edge_map/map", 1, &NodeEdgeNavigator::map_callback, this);
-    path_sub = nh.subscribe("/global_path", 1, &NodeEdgeNavigator::path_callback, this);
+    path_sub = nh.subscribe("/global_path/path", 1, &NodeEdgeNavigator::path_callback, this);
     pose_sub = nh.subscribe("/estimated_pose/pose", 1, &NodeEdgeNavigator::pose_callback, this);
     edge_sub = nh.subscribe("/estimated_pose/edge", 1, &NodeEdgeNavigator::edge_callback, this);
     intersection_flag_sub = nh.subscribe("/intersection_flag", 1, &NodeEdgeNavigator::intersection_flag_callback, this);
