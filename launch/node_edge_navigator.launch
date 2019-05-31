@@ -1,13 +1,15 @@
 <launch>
 
-	<arg name="hz" default="50"/>
-	<arg name="excess_detection_ratio" default="1.2"/>
-	<arg name="goal_radius" default="0.5"/>
+    <arg name="hz" default="50"/>
+    <arg name="excess_detection_ratio" default="1.2"/>
+    <arg name="goal_radius" default="0.5"/>
+    <arg name="enable_requesting_replanning" default="false"/>
 
-	<node pkg="node_edge_navigator" type="node_edge_navigator" name="node_edge_navigator">
-		<param name="HZ" value="$(arg hz)"/> 
-		<param name="EXCESS_DETECTION_RATIO" value="$(arg excess_detection_ratio)"/> 
-		<param name="GOAL_RADIUS" value="$(arg goal_radius)"/> 
-	</node>
+    <node pkg="node_edge_navigator" type="node_edge_navigator" name="node_edge_navigator">
+        <param name="HZ" value="$(arg hz)"/>
+        <param name="EXCESS_DETECTION_RATIO" value="$(arg excess_detection_ratio)"/>
+        <param name="GOAL_RADIUS" value="$(arg goal_radius)"/>
+        <param name="ENABLE_REQUESTING_REPLANNING" value="$(arg enable_requesting_replanning)"/>
+    </node>
 
 </launch>
