@@ -37,6 +37,7 @@ private:
     double EXCESS_DETECTION_RATIO;
     double GOAL_RADIUS;
     bool ENABLE_REQUESTING_REPLANNING;
+    double INTERSECTION_ACCEPTANCE_PROGRESS_RATIO;
 
     ros::NodeHandle nh;
     ros::NodeHandle private_nh;
@@ -92,6 +93,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     private_nh.param("EXCESS_DETECTION_RATIO", EXCESS_DETECTION_RATIO, {1.2});
     private_nh.param("GOAL_RADIUS", GOAL_RADIUS, {50});
     private_nh.param("ENABLE_REQUESTING_REPLANNING", ENABLE_REQUESTING_REPLANNING, {false});
+    private_nh.param("INTERSECTION_ACCEPTANCE_PROGRESS_RATIO", INTERSECTION_ACCEPTANCE_PROGRESS_RATIO, {0.5});
 
     map_subscribed = false;
     global_path_subscribed = false;
@@ -103,6 +105,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     std::cout << "EXCESS_DETECTION_RATIO: " << EXCESS_DETECTION_RATIO << std::endl;
     std::cout << "GOAL_RADIUS: " << GOAL_RADIUS << std::endl;
     std::cout << "ENABLE_REQUESTING_REPLANNING: " << ENABLE_REQUESTING_REPLANNING << std::endl;
+    std::cout << "INTERSECTION_ACCEPTANCE_PROGRESS_RATIO: " << INTERSECTION_ACCEPTANCE_PROGRESS_RATIO << std::endl;
     std::cout << std::endl;
 }
 
@@ -175,9 +178,11 @@ void NodeEdgeNavigator::process(void)
                 }else if(target_node.type == "intersection"){
                     if(intersection_flag){
                         intersection_flag = false;
-                        arrived_at_node();
-                        // update target node
-                        get_node_from_id(global_path_ids[0], target_node);
+                        if(estimated_edge.progress > INTERSECTION_ACCEPTANCE_PROGRESS_RATIO){
+                            arrived_at_node();
+                            // update target node
+                            get_node_from_id(global_path_ids[0], target_node);
+                        }
                     }
                     // caluculate target node direction
                     amsl_navigation_msgs::Node last_node;
