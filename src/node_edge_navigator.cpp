@@ -66,6 +66,8 @@ private:
     bool edge_updated;
     std::vector<int> passed_paths;
     bool intersection_flag;
+    int last_intersection_node_id;
+    bool first_edge_sub_flag;
 };
 
 int main(int argc, char** argv)
@@ -99,6 +101,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     global_path_subscribed = false;
     pose_updated = false;
     edge_updated = false;
+    first_edge_sub_flag = true;
 
     std::cout << "=== node_edge_navigator ===" << std::endl;
     std::cout << "HZ: " << HZ << std::endl;
@@ -133,6 +136,10 @@ void NodeEdgeNavigator::edge_callback(const amsl_navigation_msgs::EdgeConstPtr& 
 {
     estimated_edge = *msg;
     edge_updated = true;
+    if(first_edge_sub_flag){
+        first_edge_sub_flag = false;
+        last_intersection_node_id = estimated_edge.node0_id;
+    }
 }
 
 void NodeEdgeNavigator::intersection_flag_callback(const std_msgs::BoolConstPtr& msg)
@@ -179,9 +186,14 @@ void NodeEdgeNavigator::process(void)
                     if(intersection_flag){
                         intersection_flag = false;
                         if(estimated_edge.progress > INTERSECTION_ACCEPTANCE_PROGRESS_RATIO){
-                            arrived_at_node();
-                            // update target node
-                            get_node_from_id(global_path_ids[0], target_node);
+                            if(last_intersection_node_id != estimated_edge.node1_id){
+                                last_intersection_node_id = global_path_ids[0];
+                                arrived_at_node();
+                                // update target node
+                                get_node_from_id(global_path_ids[0], target_node);
+                            }else{
+                                std::cout << "already arrived at the intersection" << std::endl;
+                            }
                         }
                     }
                     // caluculate target node direction
