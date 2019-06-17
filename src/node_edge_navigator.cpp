@@ -37,6 +37,7 @@ private:
     double EXCESS_DETECTION_RATIO;
     double GOAL_RADIUS;
     bool ENABLE_REQUESTING_REPLANNING;
+    double INTERSECTION_ACCEPTANCE_PROGRESS_RATIO;
 
     ros::NodeHandle nh;
     ros::NodeHandle private_nh;
@@ -65,6 +66,8 @@ private:
     bool edge_updated;
     std::vector<int> passed_paths;
     bool intersection_flag;
+    int last_target_node_id;
+    bool first_edge_sub_flag;
 };
 
 int main(int argc, char** argv)
@@ -92,17 +95,20 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     private_nh.param("EXCESS_DETECTION_RATIO", EXCESS_DETECTION_RATIO, {1.2});
     private_nh.param("GOAL_RADIUS", GOAL_RADIUS, {50});
     private_nh.param("ENABLE_REQUESTING_REPLANNING", ENABLE_REQUESTING_REPLANNING, {false});
+    private_nh.param("INTERSECTION_ACCEPTANCE_PROGRESS_RATIO", INTERSECTION_ACCEPTANCE_PROGRESS_RATIO, {0.5});
 
     map_subscribed = false;
     global_path_subscribed = false;
     pose_updated = false;
     edge_updated = false;
+    first_edge_sub_flag = true;
 
     std::cout << "=== node_edge_navigator ===" << std::endl;
     std::cout << "HZ: " << HZ << std::endl;
     std::cout << "EXCESS_DETECTION_RATIO: " << EXCESS_DETECTION_RATIO << std::endl;
     std::cout << "GOAL_RADIUS: " << GOAL_RADIUS << std::endl;
     std::cout << "ENABLE_REQUESTING_REPLANNING: " << ENABLE_REQUESTING_REPLANNING << std::endl;
+    std::cout << "INTERSECTION_ACCEPTANCE_PROGRESS_RATIO: " << INTERSECTION_ACCEPTANCE_PROGRESS_RATIO << std::endl;
     std::cout << std::endl;
 }
 
@@ -130,12 +136,16 @@ void NodeEdgeNavigator::edge_callback(const amsl_navigation_msgs::EdgeConstPtr& 
 {
     estimated_edge = *msg;
     edge_updated = true;
+    if(first_edge_sub_flag){
+        first_edge_sub_flag = false;
+        last_target_node_id = estimated_edge.node0_id;
+    }
 }
 
 void NodeEdgeNavigator::intersection_flag_callback(const std_msgs::BoolConstPtr& msg)
 {
-    std::cout << "intersection" << std::endl;
     intersection_flag = msg->data;
+    std::cout << "received intersection_flag: " << intersection_flag << std::endl;
 }
 
 void NodeEdgeNavigator::process(void)
@@ -153,12 +163,18 @@ void NodeEdgeNavigator::process(void)
                 }
                 if(global_path_ids.size() > 1){
                     if(global_path_ids[0] == estimated_edge.node0_id && global_path_ids[1] == estimated_edge.node1_id){
+                        std::cout << "global path[0] was deleted because robot was already on the target edge" << std::endl;
+                        last_target_node_id = global_path_ids[0];
                         global_path_ids.erase(global_path_ids.begin());
                     }
                 }
                 geometry_msgs::PoseStamped direction;
                 amsl_navigation_msgs::Node target_node;
                 get_node_from_id(global_path_ids[0], target_node);
+                std::cout << "global path id: " << std::endl;
+                for(auto gp : global_path_ids){
+                    std::cout << gp << std::endl;
+                }
                 std::cout << "target node: \n" << target_node << std::endl;
                 if((target_node.type == "position") || (target_node.type == "gps")){
                     double distance = get_distance_from_points(target_node.point, estimated_pose.pose.pose.position);
@@ -173,16 +189,26 @@ void NodeEdgeNavigator::process(void)
                     target_node_direction = pi_2_pi(target_node_direction);
                     direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
                 }else if(target_node.type == "intersection"){
+                    amsl_navigation_msgs::Node last_target_node;
+                    get_node_from_id(last_target_node_id, last_target_node);
+                    std::cout << "last target node: \n" << last_target_node << std::endl;
                     if(intersection_flag){
                         intersection_flag = false;
-                        arrived_at_node();
-                        // update target node
-                        get_node_from_id(global_path_ids[0], target_node);
+                        if(estimated_edge.progress > INTERSECTION_ACCEPTANCE_PROGRESS_RATIO){
+                            if(last_target_node_id != estimated_edge.node1_id){
+                                std::cout << "new intersection" << std::endl;
+                                last_target_node_id = global_path_ids[0];
+                                get_node_from_id(last_target_node_id, last_target_node);
+                                arrived_at_node();
+                                // update target node
+                                get_node_from_id(global_path_ids[0], target_node);
+                            }else{
+                                std::cout << "already arrived at the intersection" << std::endl;
+                            }
+                        }
                     }
                     // caluculate target node direction
-                    amsl_navigation_msgs::Node last_node;
-                    get_node_from_id(estimated_edge.node0_id, last_node);
-                    double global_node_direction = atan2(target_node.point.y - last_node.point.y, target_node.point.x - last_node.point.x);
+                    double global_node_direction = atan2(target_node.point.y - last_target_node.point.y, target_node.point.x - last_target_node.point.x);
                     std::cout << "edge direction: " << global_node_direction << "[rad]" << std::endl;
                     double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
                     target_node_direction = pi_2_pi(target_node_direction);
