@@ -51,8 +51,11 @@ void LocalGoalCreator()
 
 	ros::Rate loop_rate(10);
 	while(ros::ok()){
+		std::cout << "=== local_goal_creator ===" << std::endl;
 		if(map_received && target_received){
 			detection_main(local_goal);
+			std::cout << "local goal:" << std::endl;
+			std::cout << local_goal.pose.position << std::endl;
 			pub_goal.publish(local_goal);
 		}
 		else{
