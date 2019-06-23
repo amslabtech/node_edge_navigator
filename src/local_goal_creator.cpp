@@ -9,7 +9,6 @@ LocalGoalCreator::LocalGoalCreator(void)
 	local_goal_pub = nh.advertise<geometry_msgs::PoseStamped>("/local_goal",1);
 
 	map_received = false;
-	target_received = false;
 }
 
 float LocalGoalCreator::get_yaw(geometry_msgs::Quaternion q)
@@ -30,7 +29,17 @@ void LocalGoalCreator::TargetCallback(const geometry_msgs::PoseStampedConstPtr& 
 {
 	geometry_msgs::PoseStamped target = *msg;
 	target_orientation = get_yaw(target.pose.orientation);
-	target_received = true;
+
+	geometry_msgs::PoseStamped local_goal;
+	if(map_received){
+		detection_main(local_goal);
+		std::cout << "local goal:" << std::endl;
+		std::cout << local_goal.pose.position << std::endl;
+		local_goal_pub.publish(local_goal);
+	}
+	else{
+		std::cout << "wating for map..." << std::endl;
+	}
 }
 
 void LocalGoalCreator::detection_main(geometry_msgs::PoseStamped& goal)
@@ -44,22 +53,8 @@ void LocalGoalCreator::detection_main(geometry_msgs::PoseStamped& goal)
 
 void LocalGoalCreator::process(void)
 {
-	geometry_msgs::PoseStamped local_goal;
-	ros::Rate loop_rate(10);
-	while(ros::ok()){
-		std::cout << "=== local_goal_creator ===" << std::endl;
-		if(map_received && target_received){
-			detection_main(local_goal);
-			std::cout << "local goal:" << std::endl;
-			std::cout << local_goal.pose.position << std::endl;
-			local_goal_pub.publish(local_goal);
-		}
-		else{
-			std::cout << "map:" << map_received << " target:" << target_received << std::endl;
-		}
-		ros::spinOnce();
-		loop_rate.sleep();
-	}
+	std::cout << "=== local_goal_creator ===" << std::endl;
+	ros::spin();
 }
 
 int main(int argc, char** argv)

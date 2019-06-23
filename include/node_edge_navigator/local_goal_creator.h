@@ -33,7 +33,6 @@ private:
 
 	nav_msgs::OccupancyGrid local_map;
 	bool map_received;
-	bool target_received;
 	float target_orientation;
 };
 
