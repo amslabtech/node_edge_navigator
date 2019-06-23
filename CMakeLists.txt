@@ -13,12 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   amsl_navigation_msgs
   tf
-  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(OpenCV 3 REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -107,7 +105,7 @@ find_package(OpenCV 3 REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-   INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES node_edge_navigator
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
@@ -120,7 +118,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
+# include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -162,7 +160,6 @@ target_link_libraries(node_edge_navigator
 )
 target_link_libraries(local_goal_creator
 	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
 )
 
 #############

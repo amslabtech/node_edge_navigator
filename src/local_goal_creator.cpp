@@ -3,6 +3,8 @@
 LocalGoalCreator::LocalGoalCreator(void)
 :local_nh("~")
 {
+	local_nh.param("GOAL_DIS", GOAL_DIS, {5.0});
+
 	map_sub = nh.subscribe("/local_map", 1, &LocalGoalCreator::MapCallback, this);
 	target_sub = nh.subscribe("/direction/relative", 1, &LocalGoalCreator::TargetCallback, this);
 
@@ -45,8 +47,8 @@ void LocalGoalCreator::TargetCallback(const geometry_msgs::PoseStampedConstPtr& 
 void LocalGoalCreator::detection_main(geometry_msgs::PoseStamped& goal)
 {
 	goal.header = local_map.header;
-	goal.pose.position.x = 5.0*cos(target_orientation); 
-	goal.pose.position.y = 5.0*sin(target_orientation); 
+	goal.pose.position.x = GOAL_DIS*cos(target_orientation); 
+	goal.pose.position.y = GOAL_DIS*sin(target_orientation); 
 	goal.pose.position.z = 0.0;
 	goal.pose.orientation = tf::createQuaternionMsgFromYaw(target_orientation);
 }

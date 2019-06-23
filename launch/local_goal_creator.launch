@@ -1,0 +1,9 @@
+<launch>
+
+    <arg name="goal_dis" default="5.0"/>
+
+    <node pkg="node_edge_navigator" type="local_goal_creator" name="local_goal_creator">
+        <param name="GOAL_DIS" value="$(arg goal_dis)"/>
+    </node>
+
+</launch>

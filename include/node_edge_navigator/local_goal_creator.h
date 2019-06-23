@@ -8,9 +8,6 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/tf.h>
 
-#include <opencv2/opencv.hpp>
-#include <cv_bridge/cv_bridge.h>
-
 class LocalGoalCreator
 {
 public:
@@ -34,6 +31,7 @@ private:
 	nav_msgs::OccupancyGrid local_map;
 	bool map_received;
 	float target_orientation;
+	double GOAL_DIS;
 };
 
 #endif
