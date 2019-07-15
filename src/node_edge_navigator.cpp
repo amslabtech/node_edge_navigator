@@ -162,10 +162,24 @@ void NodeEdgeNavigator::process(void)
                     std::cout << "global path is empty" << std::endl;
                 }
                 if(global_path_ids.size() > 1){
-                    if(global_path_ids[0] == estimated_edge.node0_id && global_path_ids[1] == estimated_edge.node1_id){
-                        std::cout << "global path[0] was deleted because robot was already on the target edge" << std::endl;
-                        last_target_node_id = global_path_ids[0];
-                        global_path_ids.erase(global_path_ids.begin());
+                    if(global_path_ids[0] != estimated_edge.node1_id){
+                        if(global_path_ids[0] == estimated_edge.node0_id && global_path_ids[1] == estimated_edge.node1_id){
+                            std::cout << "global path[0] was deleted because robot was already on the target edge" << std::endl;
+                            last_target_node_id = global_path_ids[0];
+                            global_path_ids.erase(global_path_ids.begin());
+                        }else if(global_path_ids[0] != estimated_edge.node0_id && global_path_ids[1] != estimated_edge.node1_id){
+                            std::cout << "maybe localization error" << std::endl;
+                            std::cout << estimated_edge.node0_id << ", " << estimated_edge.node1_id << std::endl;
+                            std::cout << global_path_ids[0] << ", " << global_path_ids[1] << std::endl;
+                            int global_path_size = global_path_ids.size();
+                            for(int i=0;i<global_path_size-1;i++){
+                                if(global_path_ids[i] == estimated_edge.node0_id && global_path_ids[i+1] == estimated_edge.node1_id){
+                                    std::cout << "estimated edge was found in global path" << std::endl;
+                                    global_path_ids.erase(global_path_ids.begin(), global_path_ids.begin() + i);
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
                 geometry_msgs::PoseStamped direction;
