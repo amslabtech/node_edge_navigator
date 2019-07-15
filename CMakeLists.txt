@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(node_edge_navigator)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+#add_compile_options(-std=c++11)
+SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall ${CMAKE_CXX_FLAGS}")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -212,7 +213,7 @@ target_link_libraries(local_goal_creator
 
 if(CATKIN_ENABLE_TESTING)
 	find_package(rostest REQUIRED)
-	add_rostest_gtest(node_edge_navigator_test 
+	add_rostest_gtest(node_edge_navigator_test
 		test/node_edge_navigator.test
 		test/node_edge_navigator_test.cpp
 	)
