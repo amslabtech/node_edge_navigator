@@ -1,17 +1,9 @@
 FROM ros:melodic-ros-base
 
-RUN apt-get update
+RUN apt update
 
-RUN apt-get install -y sudo \
-                       wget \
-                       lsb-release \
-                       mesa-utils \
-                       python-pip
-
-RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-latest.list \
-         && wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
-
-RUN apt-get update
+RUN apt install -y ros-melodic-tf* \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root
 
@@ -32,8 +24,6 @@ RUN ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
 
 RUN apt clean \
     && rm -rf /var/lib/apt/lists/*
-
-RUN pip install pyyaml
 
 # clone repository
 WORKDIR /root
