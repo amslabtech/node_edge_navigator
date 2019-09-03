@@ -1,6 +1,8 @@
+<?xml version="1.0"?>
+
 <launch>
 
-    <arg name="hz" default="50"/>
+    <arg name="hz" default="20"/>
     <arg name="excess_detection_ratio" default="1.2"/>
     <arg name="goal_radius" default="0.5"/>
     <arg name="enable_requesting_replanning" default="false"/>

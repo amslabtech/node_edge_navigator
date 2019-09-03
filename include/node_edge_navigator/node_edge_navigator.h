@@ -71,6 +71,7 @@ private:
     bool intersection_flag;
     int last_target_node_id;
     bool first_edge_sub_flag;
+    int global_path_index;
 };
 
 #endif// __NODE_EDGE_NAVIGATOR_H
