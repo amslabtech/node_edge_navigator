@@ -47,8 +47,17 @@ void LocalGoalCreator::TargetCallback(const geometry_msgs::PoseStampedConstPtr& 
 void LocalGoalCreator::detection_main(geometry_msgs::PoseStamped& goal)
 {
 	goal.header = local_map.header;
-	goal.pose.position.x = GOAL_DIS*cos(target_orientation); 
-	goal.pose.position.y = GOAL_DIS*sin(target_orientation); 
+    double distance = 0;
+    for(;distance<=GOAL_DIS;distance+=local_map.info.resolution){
+        int x_grid = round((distance * cos(target_orientation) - local_map.info.origin.position.x) / local_map.info.resolution);
+        int y_grid = round((distance * sin(target_orientation) - local_map.info.origin.position.y) / local_map.info.resolution);
+        if(local_map.data[x_grid + local_map.info.width * y_grid] != 0){
+            distance = std::max(0.0, distance - local_map.info.resolution);
+            break;
+        }
+    }
+	goal.pose.position.x = distance*cos(target_orientation);
+	goal.pose.position.y = distance*sin(target_orientation);
 	goal.pose.position.z = 0.0;
 	goal.pose.orientation = tf::createQuaternionMsgFromYaw(target_orientation);
 }
