@@ -65,6 +65,7 @@ void NodeEdgeNavigator::edge_callback(const amsl_navigation_msgs::EdgeConstPtr& 
         first_edge_sub_flag = false;
         last_target_node_id = estimated_edge.node0_id;
     }
+    std::cout << "\nestimated edge:\n" << estimated_edge << std::endl;
 }
 
 void NodeEdgeNavigator::intersection_flag_callback(const std_msgs::BoolConstPtr& msg)
@@ -84,27 +85,24 @@ void NodeEdgeNavigator::process(void)
                 double start_time = ros::Time::now().toSec();
                 int global_path_ids_num = global_path_ids.size();
                 if(global_path_ids_num - global_path_index > 0){
+                    // unexpected process
                     if(global_path_ids_num - global_path_index > 1){
                         if(global_path_ids[global_path_index] != estimated_edge.node1_id){
                             if(global_path_ids[global_path_index] == estimated_edge.node0_id && global_path_ids[global_path_index + 1] == estimated_edge.node1_id){
                                 std::cout << "\033[32mnode " << global_path_ids[global_path_index] << " has been considered to be passed because the robot is on the target edge\033[0m" << std::endl;
                                 last_target_node_id = global_path_ids[global_path_index];
                                 global_path_index++;
-                            }else if(global_path_ids[global_path_index] != estimated_edge.node0_id && global_path_ids[global_path_index + 1] != estimated_edge.node1_id){
-                                // ??????????????????????????????????????????????????????????????????????????????????????????????????????????
-                                std::cout << "\033[31mmaybe localization error\033[0m" << std::endl;
-                                std::cout << estimated_edge.node0_id << ", " << estimated_edge.node1_id << std::endl;
-                                std::cout << global_path_ids[global_path_index] << ", " << global_path_ids[global_path_index + 1] << std::endl;
-                                for(int i=global_path_index;i<global_path_ids_num-1;i++){
-                                    if(global_path_ids[i] == estimated_edge.node0_id && global_path_ids[i+1] == estimated_edge.node1_id){
-                                        std::cout << "estimated edge was found in global path" << std::endl;
-                                        global_path_index += i;
-                                        break;
-                                    }
-                                }
+                            }else if(last_target_node_id == estimated_edge.node0_id && global_path_ids[global_path_index] != estimated_edge.node1_id){
+                                std::cout << "\033[31mmaybe navigation error\033[0m" << std::endl;
+                                std::cout << "estimated edge: " << estimated_edge.node0_id << " -> " << estimated_edge.node1_id << std::endl;
+                                std::cout << "desired edge: " << last_target_node_id << " -> " << global_path_ids[global_path_index] << std::endl;
+                                ///////////////////////////////////
+                                //  navigation recovery behavior //
+                                ///////////////////////////////////
                             }
                         }
                     }
+                    // ~unexpected process
                     geometry_msgs::PoseStamped direction;
                     amsl_navigation_msgs::Node target_node;
                     get_node_from_id(global_path_ids[global_path_index], target_node);
@@ -138,7 +136,6 @@ void NodeEdgeNavigator::process(void)
                             if(estimated_edge.progress > INTERSECTION_ACCEPTANCE_PROGRESS_RATIO){
                                 if(last_target_node_id != estimated_edge.node1_id){
                                     std::cout << "new intersection" << std::endl;
-                                    last_target_node_id = global_path_ids[0];
                                     get_node_from_id(last_target_node_id, last_target_node);
                                     arrived_at_node();
                                     // update target node
@@ -256,7 +253,10 @@ void NodeEdgeNavigator::arrived_at_node(void)
 {
     amsl_navigation_msgs::Node node;
     get_node_from_id(global_path_ids[global_path_index], node);
-    std::cout << "\033[031marrived at node: \n" << node << "\033[0m" << std::endl;
+    std::cout << "\033[032m===================\033[0m" << std::endl;
+    std::cout << "\033[032marrived at node: \n" << node << "\033[0m" << std::endl;
+    std::cout << "\033[032m===================\033[0m" << std::endl;
+    last_target_node_id = global_path_ids[global_path_index];
     global_path_index++;
 }
 
