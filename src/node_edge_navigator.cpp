@@ -165,9 +165,7 @@ void NodeEdgeNavigator::process(void)
                     }
                     //std::cout << "target node:\n" << target_node << std::endl;
                     std::cout << "direction: " << tf::getYaw(direction.pose.orientation) << "[rad]" << std::endl;
-                    // direction.pose.position = estimated_pose.pose.pose.position;
-                    direction.header.frame_id = "base_link";
-                    direction.header.stamp = ros::Time::now();
+                    direction.header = estimated_pose.header;
                     direction_pub.publish(direction);
 
                     pose_updated = false;
