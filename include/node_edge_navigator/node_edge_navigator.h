@@ -34,6 +34,7 @@ public:
     void request_replanning(void);
     void arrived_at_node(void);
     double get_distance_from_points(const geometry_msgs::Point&, const geometry_msgs::Point&);
+    void check_global_path_with_localization(void);
 
 private:
     double HZ;
