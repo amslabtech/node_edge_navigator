@@ -17,6 +17,7 @@
 #include "amsl_navigation_msgs/UpdateNode.h"
 #include "amsl_navigation_msgs/UpdateEdge.h"
 #include "amsl_navigation_msgs/Replan.h"
+#include "amsl_navigation_managers/node_edge_map_interface.h"
 
 class NodeEdgeNavigator
 {
@@ -29,7 +30,6 @@ public:
     void edge_callback(const amsl_navigation_msgs::EdgeConstPtr&);
     void intersection_flag_callback(const std_msgs::BoolConstPtr&);
     void process(void);
-    void get_node_from_id(int, amsl_navigation_msgs::Node&);
     double pi_2_pi(double);
     void request_replanning(void);
     void arrived_at_node(void);
@@ -60,6 +60,7 @@ private:
     tf::StampedTransform transform;
 
     amsl_navigation_msgs::NodeEdgeMap map;
+    NodeEdgeMapInterface nemi;
     std::vector<int> global_path_ids;
     nav_msgs::Odometry estimated_pose;
     amsl_navigation_msgs::Edge estimated_edge;

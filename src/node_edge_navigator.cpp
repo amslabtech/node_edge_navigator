@@ -38,6 +38,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
 void NodeEdgeNavigator::map_callback(const amsl_navigation_msgs::NodeEdgeMapConstPtr& msg)
 {
     map = *msg;
+    nemi.set_map(map);
     map_subscribed = true;
     std::cout << "received map" << std::endl;
 }
@@ -88,7 +89,7 @@ void NodeEdgeNavigator::process(void)
                     check_global_path_with_localization();
                     geometry_msgs::PoseStamped direction;
                     amsl_navigation_msgs::Node target_node;
-                    get_node_from_id(global_path_ids[global_path_index], target_node);
+                    nemi.get_node_from_id(global_path_ids[global_path_index], target_node);
                     std::cout << "global path id: " << std::endl;
                     for(int i=0;i<global_path_ids_num;i++){
                         if(i != global_path_index){
@@ -103,7 +104,7 @@ void NodeEdgeNavigator::process(void)
                         if(distance <= GOAL_RADIUS){
                             arrived_at_node();
                             // update target node
-                            get_node_from_id(global_path_ids[global_path_index], target_node);
+                            nemi.get_node_from_id(global_path_ids[global_path_index], target_node);
                         }
                         // caluculate target node direction
                         double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
@@ -112,17 +113,17 @@ void NodeEdgeNavigator::process(void)
                         direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
                     }else if(target_node.type == "intersection"){
                         amsl_navigation_msgs::Node last_target_node;
-                        get_node_from_id(last_target_node_id, last_target_node);
+                        nemi.get_node_from_id(last_target_node_id, last_target_node);
                         std::cout << "last target node: \n" << last_target_node << std::endl;
                         if(intersection_flag){
                             intersection_flag = false;
                             if(estimated_edge.progress > INTERSECTION_ACCEPTANCE_PROGRESS_RATIO){
                                 if(last_target_node_id != estimated_edge.node1_id){
                                     std::cout << "new intersection" << std::endl;
-                                    get_node_from_id(last_target_node_id, last_target_node);
+                                    nemi.get_node_from_id(last_target_node_id, last_target_node);
                                     arrived_at_node();
                                     // update target node
-                                    get_node_from_id(global_path_ids[0], target_node);
+                                    nemi.get_node_from_id(global_path_ids[0], target_node);
                                 }else{
                                     std::cout << "already arrived at the intersection" << std::endl;
                                 }
@@ -166,16 +167,6 @@ void NodeEdgeNavigator::process(void)
         }
         ros::spinOnce();
         loop_rate.sleep();
-    }
-}
-
-void NodeEdgeNavigator::get_node_from_id(int id, amsl_navigation_msgs::Node& node)
-{
-    for(const auto n : map.nodes){
-        if(n.id == id){
-            node = n;
-            return;
-        }
     }
 }
 
@@ -233,7 +224,7 @@ void NodeEdgeNavigator::request_replanning(void)
 void NodeEdgeNavigator::arrived_at_node(void)
 {
     amsl_navigation_msgs::Node node;
-    get_node_from_id(global_path_ids[global_path_index], node);
+    nemi.get_node_from_id(global_path_ids[global_path_index], node);
     std::cout << "\033[032m===================\033[0m" << std::endl;
     std::cout << "\033[032marrived at node: \n" << node << "\033[0m" << std::endl;
     std::cout << "\033[032m===================\033[0m" << std::endl;

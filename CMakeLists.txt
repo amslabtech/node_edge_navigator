@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   amsl_navigation_msgs
+  amsl_navigation_managers
   tf
 )
 
@@ -157,10 +158,11 @@ add_dependencies(local_goal_creator amsl_navigation_msgs_generate_messages_cpp)
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(node_edge_navigator
-	${catkin_LIBRARIES}
+    ${catkin_LIBRARIES}
+    node_edge_map_interface
 )
 target_link_libraries(local_goal_creator
-	${catkin_LIBRARIES}
+    ${catkin_LIBRARIES}
 )
 
 #############
@@ -212,10 +214,10 @@ target_link_libraries(local_goal_creator
 # catkin_add_nosetests(test)
 
 if(CATKIN_ENABLE_TESTING)
-	find_package(rostest REQUIRED)
-	add_rostest_gtest(node_edge_navigator_test
-		test/node_edge_navigator.test
-		test/node_edge_navigator_test.cpp
-	)
-	target_link_libraries(node_edge_navigator_test ${catkin_LIBRARIES})
+    find_package(rostest REQUIRED)
+    add_rostest_gtest(node_edge_navigator_test
+        test/node_edge_navigator.test
+        test/node_edge_navigator_test.cpp
+    )
+    target_link_libraries(node_edge_navigator_test ${catkin_LIBRARIES})
 endif()
