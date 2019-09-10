@@ -18,6 +18,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     private_nh.param("GOAL_RADIUS", GOAL_RADIUS, {0.5});
     private_nh.param("ENABLE_REQUESTING_REPLANNING", ENABLE_REQUESTING_REPLANNING, {false});
     private_nh.param("INTERSECTION_ACCEPTANCE_PROGRESS_RATIO", INTERSECTION_ACCEPTANCE_PROGRESS_RATIO, {0.5});
+    private_nh.param("ROBOT_FRAME", ROBOT_FRAME, {"base_link"});
 
     map_subscribed = false;
     global_path_subscribed = false;
@@ -32,6 +33,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     std::cout << "GOAL_RADIUS: " << GOAL_RADIUS << std::endl;
     std::cout << "ENABLE_REQUESTING_REPLANNING: " << ENABLE_REQUESTING_REPLANNING << std::endl;
     std::cout << "INTERSECTION_ACCEPTANCE_PROGRESS_RATIO: " << INTERSECTION_ACCEPTANCE_PROGRESS_RATIO << std::endl;
+    std::cout << "ROBOT_FRAME: " << ROBOT_FRAME << std::endl;
     std::cout << std::endl;
 }
 
@@ -129,17 +131,22 @@ void NodeEdgeNavigator::process(void)
                                 }
                             }
                         }
+                        // excess detection
+                        double progress = calculate_substantial_edge_progress(estimated_edge, last_target_node_id, target_node.id);
+                        std::cout << "substantial progress: " << progress << std::endl;
+                        if(progress >= EXCESS_DETECTION_RATIO){
+                            std::cout << "\033[033mexcess the target node!!!\033[0m" << std::endl;
+                            if(ENABLE_REQUESTING_REPLANNING){
+                                std::cout << "intersection excession is detected" << std::endl;
+                                request_replanning();
+                            }
+                        }
                         // caluculate target node direction
                         double global_node_direction = atan2(target_node.point.y - last_target_node.point.y, target_node.point.x - last_target_node.point.x);
                         std::cout << "edge direction: " << global_node_direction << "[rad]" << std::endl;
                         double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
                         target_node_direction = pi_2_pi(target_node_direction);
                         direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
-                        // excess detection
-                        if((estimated_edge.progress >= EXCESS_DETECTION_RATIO) && ENABLE_REQUESTING_REPLANNING){
-                            std::cout << "intersection excession is detected" << std::endl;
-                            request_replanning();
-                        }
                     }else{
                         // default
                         double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
@@ -149,7 +156,8 @@ void NodeEdgeNavigator::process(void)
                     }
                     //std::cout << "target node:\n" << target_node << std::endl;
                     std::cout << "direction: " << tf::getYaw(direction.pose.orientation) << "[rad]" << std::endl;
-                    direction.header = estimated_pose.header;
+                    direction.header.frame_id = ROBOT_FRAME;
+                    direction.header.stamp = estimated_pose.header.stamp;
                     direction_pub.publish(direction);
 
                     pose_updated = false;
@@ -257,6 +265,31 @@ void NodeEdgeNavigator::check_global_path_with_localization(void)
         }
     }
 
+}
+
+double NodeEdgeNavigator::calculate_substantial_edge_progress(const amsl_navigation_msgs::Edge& edge, int node0_id, int node1_id)
+{
+    if((edge.node0_id == node0_id) && (edge.node1_id == node1_id)){
+        // correctly navigated
+        return edge.progress;
+    }else if((edge.node0_id == node0_id) && (edge.node1_id != node1_id)){
+        // go into wrong edge?
+        return EXCESS_DETECTION_RATIO;
+    }else if(edge.node0_id == node1_id){
+        // excessed the target node
+        amsl_navigation_msgs::Edge e;
+        nemi.get_edge_from_node_id(node0_id, node1_id, e);
+        if(e.distance > 0.0){
+            return (edge.progress * edge.distance + e.distance) / e.distance;
+        }else{
+            std::cout << "\033[031edge " << node0_id << " -> " << node1_id << " was not found in map!!!\033[0m" << std::endl;
+            return EXCESS_DETECTION_RATIO;
+        }
+    }else{
+        // unknown error
+        std::cout << "\033[031unknown error!!!\033[0m" << std::endl;
+        return EXCESS_DETECTION_RATIO;
+    }
 }
 
 int main(int argc, char** argv)
