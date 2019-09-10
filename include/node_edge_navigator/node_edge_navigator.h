@@ -76,6 +76,7 @@ private:
     int last_target_node_id;
     bool first_edge_sub_flag;
     int global_path_index;
+    std::vector<int> appended_position_type_node_list;
 };
 
 #endif// __NODE_EDGE_NAVIGATOR_H

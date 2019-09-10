@@ -26,6 +26,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     edge_updated = false;
     first_edge_sub_flag = true;
     global_path_index = 0;
+    appended_position_type_node_list.clear();
 
     std::cout << "=== node_edge_navigator ===" << std::endl;
     std::cout << "HZ: " << HZ << std::endl;
@@ -100,6 +101,12 @@ void NodeEdgeNavigator::process(void)
                             std::cout << "\033[032m" << global_path_ids[i] << "<- current target\033[0m" << std::endl;;
                         }
                     }
+                    if(target_node.type=="intersection"){
+                        auto result = std::find(appended_position_type_node_list.begin(), appended_position_type_node_list.end(), target_node.id);
+                        if(result != appended_position_type_node_list.end()){
+                            target_node.type = "position";
+                        }
+                    }
                     std::cout << "target node: \n" << target_node << std::endl;
                     if((target_node.type == "position") || (target_node.type == "gps")){
                         double distance = get_distance_from_points(target_node.point, estimated_pose.pose.pose.position);
@@ -134,19 +141,28 @@ void NodeEdgeNavigator::process(void)
                         // excess detection
                         double progress = calculate_substantial_edge_progress(estimated_edge, last_target_node_id, target_node.id);
                         std::cout << "substantial progress: " << progress << std::endl;
-                        if(progress >= EXCESS_DETECTION_RATIO){
+                        if(progress <= EXCESS_DETECTION_RATIO){
+                            // caluculate target node direction (intersection)
+                            double global_node_direction = atan2(target_node.point.y - last_target_node.point.y, target_node.point.x - last_target_node.point.x);
+                            std::cout << "edge direction: " << global_node_direction << "[rad]" << std::endl;
+                            double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
+                            target_node_direction = pi_2_pi(target_node_direction);
+                            direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+                        }else{
                             std::cout << "\033[033mexcess the target node!!!\033[0m" << std::endl;
                             if(ENABLE_REQUESTING_REPLANNING){
-                                std::cout << "intersection excession is detected" << std::endl;
+                                std::cout << "request replanning" << std::endl;
                                 request_replanning();
+                            }else{
+                                // caluculate target node direction (position)
+                                std::cout << "back to last node" << std::endl;
+                                appended_position_type_node_list.push_back(target_node.id);
+                                double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
+                                double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
+                                target_node_direction = pi_2_pi(target_node_direction);
+                                direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
                             }
                         }
-                        // caluculate target node direction
-                        double global_node_direction = atan2(target_node.point.y - last_target_node.point.y, target_node.point.x - last_target_node.point.x);
-                        std::cout << "edge direction: " << global_node_direction << "[rad]" << std::endl;
-                        double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
-                        target_node_direction = pi_2_pi(target_node_direction);
-                        direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
                     }else{
                         // default
                         double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
@@ -237,6 +253,7 @@ void NodeEdgeNavigator::arrived_at_node(void)
     std::cout << "\033[032marrived at node: \n" << node << "\033[0m" << std::endl;
     std::cout << "\033[032m===================\033[0m" << std::endl;
     last_target_node_id = global_path_ids[global_path_index];
+    appended_position_type_node_list.clear();
     global_path_index++;
 }
 
