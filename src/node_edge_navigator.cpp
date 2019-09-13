@@ -144,7 +144,7 @@ void NodeEdgeNavigator::process(void)
                                 }
                             }else{
                                     std::cout << "\033[31mintersection flag is ignored because progress is small\033[0m" << std::endl;
-							}
+                            }
                         }
                         // excess detection
                         double progress = calculate_substantial_edge_progress(estimated_edge, last_target_node_id, target_node.id);
@@ -322,7 +322,7 @@ double NodeEdgeNavigator::calculate_substantial_edge_progress(const amsl_navigat
     }else{
         // unknown error
         std::cout << "\033[031munknown error!!!\033[0m" << std::endl;
-		return 0;
+        return 0;
         // return EXCESS_DETECTION_RATIO;
     }
 }
