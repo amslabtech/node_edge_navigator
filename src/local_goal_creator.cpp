@@ -4,6 +4,8 @@ LocalGoalCreator::LocalGoalCreator(void)
 :local_nh("~")
 {
 	local_nh.param("GOAL_DIS", GOAL_DIS, {5.0});
+	local_nh.param("LOCAL_GOAL_ANGLE", LOCAL_GOAL_ANGLE, {M_PI / 3.0});
+	local_nh.param("D_LOCAL_GOAL_ANGLE", D_LOCAL_GOAL_ANGLE, {M_PI / 6.0});
 
 	map_sub = nh.subscribe("/local_map", 1, &LocalGoalCreator::MapCallback, this);
 	target_sub = nh.subscribe("/direction/relative", 1, &LocalGoalCreator::TargetCallback, this);
@@ -46,24 +48,41 @@ void LocalGoalCreator::TargetCallback(const geometry_msgs::PoseStampedConstPtr& 
 void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, geometry_msgs::PoseStamped& goal)
 {
 	goal.header = local_map.header;
-    double goal_distance = sqrt(target.pose.position.x * target.pose.position.x + target.pose.position.y * target.pose.position.y);
-    std::cout << "goal direction\n" << target << std::endl;
-    std::cout << "goal distance: " << goal_distance << std::endl;
+    double target_distance = sqrt(target.pose.position.x * target.pose.position.x + target.pose.position.y * target.pose.position.y);
+    std::cout << "target distance: " << target_distance << std::endl;
     double target_orientation = get_yaw(target.pose.orientation);
-    double distance = 0;
-    for(;distance<=goal_distance;distance+=local_map.info.resolution){
-        int x_grid = round((distance * cos(target_orientation) - local_map.info.origin.position.x) / local_map.info.resolution);
-        int y_grid = round((distance * sin(target_orientation) - local_map.info.origin.position.y) / local_map.info.resolution);
-        if(local_map.data[x_grid + local_map.info.width * y_grid] != 0){
-            distance = std::max(0.0, distance - local_map.info.resolution);
-            break;
+    std::cout << "target direction\n" << target_orientation << std::endl;
+    const int ANGLE_SAMPLE_NUM = 2 * round(LOCAL_GOAL_ANGLE / D_LOCAL_GOAL_ANGLE) + 1;
+    double goal_distance = 0;
+    double goal_direction = 1e6;
+    std::cout << "ANGLE_SAMPLE_NUM: " << ANGLE_SAMPLE_NUM << std::endl;
+    for(int i=0;i<ANGLE_SAMPLE_NUM;i++){
+        double angle = -LOCAL_GOAL_ANGLE + i * D_LOCAL_GOAL_ANGLE + target_orientation;
+        std::cout << "angle: " << angle << std::endl;
+        double distance = 0;
+        for(;distance<=target_distance;distance+=local_map.info.resolution){
+            int x_grid = round((distance * cos(angle) - local_map.info.origin.position.x) / local_map.info.resolution);
+            int y_grid = round((distance * sin(angle) - local_map.info.origin.position.y) / local_map.info.resolution);
+            if(local_map.data[x_grid + local_map.info.width * y_grid] != 0){
+                distance = std::max(0.0, distance - local_map.info.resolution);
+                break;
+            }
+        }
+        std::cout << "distance: " << distance << std::endl;
+        if(goal_distance <= distance){
+            if(fabs(goal_direction - target_orientation) > fabs(angle - target_orientation)){
+                goal_distance = distance;
+                goal_direction = angle;
+                std::cout << "updated!" << std::endl;
+                std::cout << "goal_distance: " << goal_distance << std::endl;
+                std::cout << "goal_direction: " << goal_direction << std::endl;
+            }
         }
     }
-    std::cout << "distance: " << distance << std::endl;
-	goal.pose.position.x = distance*cos(target_orientation);
-	goal.pose.position.y = distance*sin(target_orientation);
+	goal.pose.position.x = goal_distance * cos(goal_direction);
+	goal.pose.position.y = goal_distance * sin(goal_direction);
 	goal.pose.position.z = 0.0;
-	goal.pose.orientation = tf::createQuaternionMsgFromYaw(target_orientation);
+	goal.pose.orientation = tf::createQuaternionMsgFromYaw(goal_direction);
 }
 
 void LocalGoalCreator::process(void)

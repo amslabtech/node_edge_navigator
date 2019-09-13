@@ -31,6 +31,8 @@ private:
 	nav_msgs::OccupancyGrid local_map;
 	bool map_received;
 	double GOAL_DIS;
+    double LOCAL_GOAL_ANGLE;
+    double D_LOCAL_GOAL_ANGLE;
 };
 
 #endif
