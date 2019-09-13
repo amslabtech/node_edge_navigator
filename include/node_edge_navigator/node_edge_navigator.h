@@ -44,6 +44,7 @@ private:
     bool ENABLE_REQUESTING_REPLANNING;
     double INTERSECTION_ACCEPTANCE_PROGRESS_RATIO;
     std::string ROBOT_FRAME;
+    double GOAL_DISTANCE;
 
     ros::NodeHandle nh;
     ros::NodeHandle private_nh;

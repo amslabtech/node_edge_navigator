@@ -26,11 +26,10 @@ private:
 	ros::Publisher local_goal_pub;
 
 	float get_yaw(geometry_msgs::Quaternion);
-	void detection_main(geometry_msgs::PoseStamped&);
+	void detection_main(const geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
 
 	nav_msgs::OccupancyGrid local_map;
 	bool map_received;
-	float target_orientation;
 	double GOAL_DIS;
 };
 

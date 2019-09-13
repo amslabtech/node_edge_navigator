@@ -19,6 +19,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     private_nh.param("ENABLE_REQUESTING_REPLANNING", ENABLE_REQUESTING_REPLANNING, {false});
     private_nh.param("INTERSECTION_ACCEPTANCE_PROGRESS_RATIO", INTERSECTION_ACCEPTANCE_PROGRESS_RATIO, {0.5});
     private_nh.param("ROBOT_FRAME", ROBOT_FRAME, {"base_link"});
+    private_nh.param("GOAL_DISTANCE", GOAL_DISTANCE, {5.0});
 
     map_subscribed = false;
     global_path_subscribed = false;
@@ -35,6 +36,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     std::cout << "ENABLE_REQUESTING_REPLANNING: " << ENABLE_REQUESTING_REPLANNING << std::endl;
     std::cout << "INTERSECTION_ACCEPTANCE_PROGRESS_RATIO: " << INTERSECTION_ACCEPTANCE_PROGRESS_RATIO << std::endl;
     std::cout << "ROBOT_FRAME: " << ROBOT_FRAME << std::endl;
+    std::cout << "GOAL_DISTANCE: " << GOAL_DISTANCE << std::endl;
     std::cout << std::endl;
 }
 
@@ -120,6 +122,10 @@ void NodeEdgeNavigator::process(void)
                         double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
                         target_node_direction = pi_2_pi(target_node_direction);
                         direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+                        distance = std::min(GOAL_DISTANCE, distance);
+                        direction.pose.position.x = distance * cos(target_node_direction);
+                        direction.pose.position.y = distance * sin(target_node_direction);
+                        direction.pose.position.z = 0.0;
                     }else if(target_node.type == "intersection"){
                         amsl_navigation_msgs::Node last_target_node;
                         nemi.get_node_from_id(last_target_node_id, last_target_node);
@@ -148,6 +154,9 @@ void NodeEdgeNavigator::process(void)
                             double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
                             target_node_direction = pi_2_pi(target_node_direction);
                             direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+                            direction.pose.position.x = GOAL_DISTANCE * cos(target_node_direction);
+                            direction.pose.position.y = GOAL_DISTANCE * sin(target_node_direction);
+                            direction.pose.position.z = 0.0;
                         }else{
                             std::cout << "\033[033mexcess the target node!!!\033[0m" << std::endl;
                             if(ENABLE_REQUESTING_REPLANNING){
@@ -161,6 +170,9 @@ void NodeEdgeNavigator::process(void)
                                 double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
                                 target_node_direction = pi_2_pi(target_node_direction);
                                 direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+                                direction.pose.position.x = GOAL_DISTANCE * cos(target_node_direction);
+                                direction.pose.position.y = GOAL_DISTANCE * sin(target_node_direction);
+                                direction.pose.position.z = 0.0;
                             }
                         }
                     }else{
@@ -169,6 +181,9 @@ void NodeEdgeNavigator::process(void)
                         double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
                         target_node_direction = pi_2_pi(target_node_direction);
                         direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+                        direction.pose.position.x = GOAL_DISTANCE * cos(target_node_direction);
+                        direction.pose.position.y = GOAL_DISTANCE * sin(target_node_direction);
+                        direction.pose.position.z = 0.0;
                     }
                     //std::cout << "target node:\n" << target_node << std::endl;
                     std::cout << "direction: " << tf::getYaw(direction.pose.orientation) << "[rad]" << std::endl;
