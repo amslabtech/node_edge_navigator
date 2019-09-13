@@ -106,7 +106,7 @@ void NodeEdgeNavigator::process(void)
                     if(target_node.type=="intersection"){
                         auto result = std::find(appended_position_type_node_list.begin(), appended_position_type_node_list.end(), target_node.id);
                         if(result != appended_position_type_node_list.end()){
-                            target_node.type = "position";
+                            target_node.type += ",position";
                         }
                     }
                     std::cout << "target node: \n" << target_node << std::endl;
@@ -177,6 +177,40 @@ void NodeEdgeNavigator::process(void)
                                 direction.pose.position.z = 0.0;
                             }
                         }
+                    }else if(target_node.type == "intersection,position"){
+                        amsl_navigation_msgs::Node last_target_node;
+                        nemi.get_node_from_id(last_target_node_id, last_target_node);
+                        std::cout << "last target node: \n" << last_target_node << std::endl;
+                        double distance = get_distance_from_points(target_node.point, estimated_pose.pose.pose.position);
+                        if(intersection_flag){
+                            intersection_flag = false;
+                            if(estimated_edge.progress > INTERSECTION_ACCEPTANCE_PROGRESS_RATIO){
+                                if(last_target_node_id != estimated_edge.node1_id){
+                                    std::cout << "new intersection" << std::endl;
+                                    nemi.get_node_from_id(last_target_node_id, last_target_node);
+                                    arrived_at_node();
+                                    // update target node
+                                    nemi.get_node_from_id(global_path_ids[0], target_node);
+                                }else{
+                                    std::cout << "\033[31malready arrived at the intersection\033[0m" << std::endl;
+                                }
+                            }else{
+                                    std::cout << "\033[31mintersection flag is ignored because progress is small\033[0m" << std::endl;
+                            }
+                        }else if(distance <= GOAL_RADIUS){
+                            arrived_at_node();
+                            // update target node
+                            nemi.get_node_from_id(global_path_ids[global_path_index], target_node);
+                        }
+                        // caluculate target node direction
+                        double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
+                        double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
+                        target_node_direction = pi_2_pi(target_node_direction);
+                        direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+                        distance = std::min(GOAL_DISTANCE, distance);
+                        direction.pose.position.x = distance * cos(target_node_direction);
+                        direction.pose.position.y = distance * sin(target_node_direction);
+                        direction.pose.position.z = 0.0;
                     }else{
                         // default
                         double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
