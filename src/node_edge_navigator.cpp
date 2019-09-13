@@ -77,7 +77,7 @@ void NodeEdgeNavigator::edge_callback(const amsl_navigation_msgs::EdgeConstPtr& 
 void NodeEdgeNavigator::intersection_flag_callback(const std_msgs::BoolConstPtr& msg)
 {
     intersection_flag = msg->data;
-    std::cout << "received intersection_flag: " << intersection_flag << std::endl;
+    std::cout << "\033[33mreceived intersection_flag: " << intersection_flag << "\033[0m" << std::endl;
 }
 
 void NodeEdgeNavigator::process(void)
@@ -140,9 +140,11 @@ void NodeEdgeNavigator::process(void)
                                     // update target node
                                     nemi.get_node_from_id(global_path_ids[0], target_node);
                                 }else{
-                                    std::cout << "already arrived at the intersection" << std::endl;
+                                    std::cout << "\033[31malready arrived at the intersection\033[0m" << std::endl;
                                 }
-                            }
+                            }else{
+                                    std::cout << "\033[31mintersection flag is ignored because progress is small\033[0m" << std::endl;
+							}
                         }
                         // excess detection
                         double progress = calculate_substantial_edge_progress(estimated_edge, last_target_node_id, target_node.id);
@@ -308,19 +310,20 @@ double NodeEdgeNavigator::calculate_substantial_edge_progress(const amsl_navigat
         // go into wrong edge?
         return EXCESS_DETECTION_RATIO;
     }else if(edge.node0_id == node1_id){
-        // excessed the target node
+        // exceeded the target node
         amsl_navigation_msgs::Edge e;
         nemi.get_edge_from_node_id(node0_id, node1_id, e);
         if(e.distance > 0.0){
             return (edge.progress * edge.distance + e.distance) / e.distance;
         }else{
-            std::cout << "\033[031edge " << node0_id << " -> " << node1_id << " was not found in map!!!\033[0m" << std::endl;
+            std::cout << "\033[031medge " << node0_id << " -> " << node1_id << " was not found in map!!!\033[0m" << std::endl;
             return EXCESS_DETECTION_RATIO;
         }
     }else{
         // unknown error
-        std::cout << "\033[031unknown error!!!\033[0m" << std::endl;
-        return EXCESS_DETECTION_RATIO;
+        std::cout << "\033[031munknown error!!!\033[0m" << std::endl;
+		return 0;
+        // return EXCESS_DETECTION_RATIO;
     }
 }
 
