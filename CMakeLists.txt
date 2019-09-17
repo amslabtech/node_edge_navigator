@@ -159,7 +159,6 @@ add_dependencies(local_goal_creator amsl_navigation_msgs_generate_messages_cpp)
 # )
 target_link_libraries(node_edge_navigator
     ${catkin_LIBRARIES}
-    node_edge_map_interface
 )
 target_link_libraries(local_goal_creator
     ${catkin_LIBRARIES}
