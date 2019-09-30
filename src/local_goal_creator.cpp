@@ -70,7 +70,13 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
                 }
             }
             std::cout << "distance: " << distance << std::endl;
-            if(goal_distance <= distance){
+            if(goal_distance < distance){
+                goal_distance = distance;
+                goal_direction = angle;
+                std::cout << "updated!" << std::endl;
+                std::cout << "goal_distance: " << goal_distance << std::endl;
+                std::cout << "goal_direction: " << goal_direction << std::endl;
+            }else if(goal_distance == distance){
                 if(fabs(goal_direction - target_orientation) > fabs(angle - target_orientation)){
                     goal_distance = distance;
                     goal_direction = angle;
