@@ -4,6 +4,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     : private_nh("~")
 {
     direction_pub = nh.advertise<geometry_msgs::PoseStamped>("/direction/relative", 1);
+    goal_flag_pub = private_nh.advertise<std_msgs::Empty>("goal_flag", 1);
     map_sub = nh.subscribe("/node_edge_map/map", 1, &NodeEdgeNavigator::map_callback, this);
     path_sub = nh.subscribe("/global_path/path", 1, &NodeEdgeNavigator::path_callback, this);
     pose_sub = nh.subscribe("/estimated_pose/pose", 1, &NodeEdgeNavigator::pose_callback, this);
@@ -138,7 +139,7 @@ void NodeEdgeNavigator::process(void)
                                     nemi.get_node_from_id(last_target_node_id, last_target_node);
                                     arrived_at_node();
                                     // update target node
-                                    nemi.get_node_from_id(global_path_ids[0], target_node);
+                                    nemi.get_node_from_id(global_path_ids[global_path_index], target_node);
                                 }else{
                                     std::cout << "\033[31malready arrived at the intersection\033[0m" << std::endl;
                                 }
@@ -233,6 +234,8 @@ void NodeEdgeNavigator::process(void)
                 }else{
                     // goal
                     std::cout << "global path is empty" << std::endl;
+                    std_msgs::Empty goal_flag;
+                    goal_flag_pub.publish(goal_flag);
                 }
             }else{
                 std::cout << "\033[1A" << "waiting for pose and edge estimation update" << std::endl;

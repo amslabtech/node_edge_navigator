@@ -6,6 +6,7 @@
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
 
+#include <std_msgs/Empty.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Int32MultiArray.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -50,6 +51,7 @@ private:
     ros::NodeHandle private_nh;
 
     ros::Publisher direction_pub;
+    ros::Publisher goal_flag_pub;
     ros::Subscriber map_sub;
     ros::Subscriber path_sub;
     ros::Subscriber pose_sub;
