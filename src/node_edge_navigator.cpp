@@ -147,8 +147,10 @@ void NodeEdgeNavigator::process(void)
                             }
                         }
                         // excess detection
-                        double progress = calculate_substantial_edge_progress(estimated_edge, last_target_node_id, target_node.id);
-                        std::cout << "substantial progress: " << progress << std::endl;
+                        double progress = calculate_practical_edge_progress(estimated_edge, last_target_node_id, target_node.id);
+                        std::cout << "practical progress: " << progress << std::endl;
+                        double practical_edge_distance = progress * estimated_edge.distance;
+                        progress = std::min(practical_edge_distance, estimated_edge.distance + 3.0) / estimated_edge.distance;
                         if(progress <= EXCESS_DETECTION_RATIO){
                             // caluculate target node direction (intersection)
                             double global_node_direction = atan2(target_node.point.y - last_target_node.point.y, target_node.point.x - last_target_node.point.x);
@@ -335,7 +337,7 @@ void NodeEdgeNavigator::check_global_path_with_localization(void)
 
 }
 
-double NodeEdgeNavigator::calculate_substantial_edge_progress(const amsl_navigation_msgs::Edge& edge, int node0_id, int node1_id)
+double NodeEdgeNavigator::calculate_practical_edge_progress(const amsl_navigation_msgs::Edge& edge, int node0_id, int node1_id)
 {
     if((edge.node0_id == node0_id) && (edge.node1_id == node1_id)){
         // correctly navigated
