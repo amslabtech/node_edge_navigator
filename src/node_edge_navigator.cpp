@@ -334,19 +334,26 @@ double NodeEdgeNavigator::get_distance_from_points(const geometry_msgs::Point& p
 void NodeEdgeNavigator::check_global_path_with_localization(void)
 {
     int global_path_ids_num = global_path_ids.size();
+    std::cout << "estimated_edge: " << estimated_edge.node0_id << " -> " << estimated_edge.node1_id << std::endl;
     if(global_path_ids_num - global_path_index > 1){
         if(global_path_ids[global_path_index] != estimated_edge.node1_id){
-            if(global_path_ids[global_path_index] == estimated_edge.node0_id && global_path_ids[global_path_index + 1] == estimated_edge.node1_id){
-                std::cout << "\033[32mnode " << global_path_ids[global_path_index] << " has been considered to be passed because the robot is on the target edge\033[0m" << std::endl;
-                last_target_node_id = global_path_ids[global_path_index];
-                global_path_index++;
-            }else if(last_target_node_id == estimated_edge.node0_id && global_path_ids[global_path_index] != estimated_edge.node1_id){
+            for(int i=global_path_index;i<global_path_ids_num-1;i++){
+                std::cout << "i=" << i << ": " << global_path_ids[i] << " -> " << global_path_ids[i+1] << std::endl;
+                if(global_path_ids[i] == estimated_edge.node0_id && global_path_ids[i + 1] == estimated_edge.node1_id){
+                    std::cout << "\033[32mnode " << global_path_ids[global_path_index] << " has been considered to be passed because the robot is on the target edge\033[0m" << std::endl;
+                    last_target_node_id = global_path_ids[global_path_index];
+                    global_path_index++;
+                    return;
+                }
+            }
+            if(last_target_node_id == estimated_edge.node0_id && global_path_ids[global_path_index] != estimated_edge.node1_id){
                 std::cout << "\033[31mmaybe navigation error\033[0m" << std::endl;
                 std::cout << "estimated edge: " << estimated_edge.node0_id << " -> " << estimated_edge.node1_id << std::endl;
                 std::cout << "desired edge: " << last_target_node_id << " -> " << global_path_ids[global_path_index] << std::endl;
                 ///////////////////////////////////
                 //  navigation recovery behavior //
                 ///////////////////////////////////
+                return;
             }
         }
     }
