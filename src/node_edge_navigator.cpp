@@ -333,11 +333,19 @@ double NodeEdgeNavigator::get_distance_from_points(const geometry_msgs::Point& p
 
 void NodeEdgeNavigator::check_global_path_with_localization(void)
 {
+    std::cout << "--- check_global_path_with_localization ---" << std::endl;
     int global_path_ids_num = global_path_ids.size();
     std::cout << "estimated_edge: " << estimated_edge.node0_id << " -> " << estimated_edge.node1_id << std::endl;
     if(global_path_ids_num - global_path_index > 1){
+        if(global_path_ids[std::max(0, global_path_index - 1)] == estimated_edge.node1_id){
+            std::cout << "no error" << std::endl;
+            return;
+        }
         if(global_path_ids[global_path_index] != estimated_edge.node1_id){
             for(int i=global_path_index;i<global_path_ids_num-1;i++){
+                if(i > global_path_index + 2){
+                    return;
+                }
                 std::cout << "i=" << i << ": " << global_path_ids[i] << " -> " << global_path_ids[i+1] << std::endl;
                 if(global_path_ids[i] == estimated_edge.node0_id && global_path_ids[i + 1] == estimated_edge.node1_id){
                     std::cout << "\033[32mnode " << global_path_ids[global_path_index] << " has been considered to be passed because the robot is on the target edge\033[0m" << std::endl;
@@ -357,7 +365,7 @@ void NodeEdgeNavigator::check_global_path_with_localization(void)
             }
         }
     }
-
+    std::cout << "no error" << std::endl;
 }
 
 double NodeEdgeNavigator::calculate_practical_edge_progress(const amsl_navigation_msgs::Edge& edge, int node0_id, int node1_id)
