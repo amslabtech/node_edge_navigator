@@ -249,8 +249,12 @@ void NodeEdgeNavigator::process(void)
                 }else{
                     // goal
                     std::cout << "global path is empty" << std::endl;
-                    std_msgs::Empty goal_flag;
-                    goal_flag_pub.publish(goal_flag);
+                    static bool published_flag = false;
+                    if(!published_flag){
+                        std_msgs::Empty goal_flag;
+                        goal_flag_pub.publish(goal_flag);
+                        published_flag = true;
+                    }
                 }
             }else{
                 std::cout << "\033[1A" << "waiting for pose and edge estimation update" << std::endl;
