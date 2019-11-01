@@ -5,12 +5,13 @@ LocalGoalCreator::LocalGoalCreator(void)
 {
     local_nh.param("GOAL_DIS", GOAL_DIS, {5.0});
     local_nh.param("LOCAL_GOAL_ANGLE", LOCAL_GOAL_ANGLE, {M_PI / 3.0});
-    local_nh.param("D_LOCAL_GOAL_ANGLE", D_LOCAL_GOAL_ANGLE, {M_PI / 6.0});
+    local_nh.param("D_LOCAL_GOAL_ANGLE", D_LOCAL_GOAL_ANGLE, {M_PI / 18.0});
 
     map_sub = nh.subscribe("/local_map", 1, &LocalGoalCreator::MapCallback, this);
     target_sub = nh.subscribe("/direction/relative", 1, &LocalGoalCreator::TargetCallback, this);
 
     local_goal_pub = nh.advertise<geometry_msgs::PoseStamped>("/local_goal",1);
+    local_goal_array_pub = nh.advertise<geometry_msgs::PoseArray>("/local_goal/array", 1);
 
     map_received = false;
 }
@@ -57,6 +58,8 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
     double goal_direction = 1e6;
     std::cout << "ANGLE_SAMPLE_NUM: " << ANGLE_SAMPLE_NUM << std::endl;
     if(ANGLE_SAMPLE_NUM > 0){
+        geometry_msgs::PoseArray local_goal_array;
+        local_goal_array.header = goal.header;
         for(int i=0;i<ANGLE_SAMPLE_NUM;i++){
             double angle = -LOCAL_GOAL_ANGLE + i * D_LOCAL_GOAL_ANGLE + target_orientation;
             std::cout << "angle: " << angle << std::endl;
@@ -69,6 +72,11 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
                     break;
                 }
             }
+            geometry_msgs::Pose p;
+            p.position.x = distance * cos(angle);
+            p.position.y = distance * sin(angle);
+            p.orientation = tf::createQuaternionMsgFromYaw(angle);
+            local_goal_array.poses.push_back(p);
             std::cout << "distance: " << distance << std::endl;
             if(goal_distance < distance){
                 goal_distance = distance;
@@ -85,6 +93,7 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
                 }
             }
         }
+        local_goal_array_pub.publish(local_goal_array);
     }else{
         double angle = target_orientation;
         std::cout << "angle: " << angle << std::endl;
