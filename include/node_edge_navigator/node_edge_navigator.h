@@ -46,6 +46,7 @@ private:
     double INTERSECTION_ACCEPTANCE_PROGRESS_RATIO;
     std::string ROBOT_FRAME;
     double GOAL_DISTANCE;
+    int GLOBAL_PATH_INDEX_OFFSET;
 
     ros::NodeHandle nh;
     ros::NodeHandle private_nh;

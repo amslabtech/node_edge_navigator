@@ -21,6 +21,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     private_nh.param("INTERSECTION_ACCEPTANCE_PROGRESS_RATIO", INTERSECTION_ACCEPTANCE_PROGRESS_RATIO, {0.5});
     private_nh.param("ROBOT_FRAME", ROBOT_FRAME, {"base_link"});
     private_nh.param("GOAL_DISTANCE", GOAL_DISTANCE, {5.0});
+    private_nh.param("GLOBAL_PATH_INDEX_OFFSET", GLOBAL_PATH_INDEX_OFFSET, {1});
 
     map_subscribed = false;
     global_path_subscribed = false;
@@ -38,6 +39,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     std::cout << "INTERSECTION_ACCEPTANCE_PROGRESS_RATIO: " << INTERSECTION_ACCEPTANCE_PROGRESS_RATIO << std::endl;
     std::cout << "ROBOT_FRAME: " << ROBOT_FRAME << std::endl;
     std::cout << "GOAL_DISTANCE: " << GOAL_DISTANCE << std::endl;
+    std::cout << "GLOBAL_PATH_INDEX_OFFSET: " << GLOBAL_PATH_INDEX_OFFSET << std::endl;
     std::cout << std::endl;
 }
 
@@ -51,10 +53,21 @@ void NodeEdgeNavigator::map_callback(const amsl_navigation_msgs::NodeEdgeMapCons
 
 void NodeEdgeNavigator::path_callback(const std_msgs::Int32MultiArrayConstPtr& msg)
 {
+    bool equal = global_path_ids.size() == msg->data.size() && std::equal(global_path_ids.cbegin(), global_path_ids.cend(), msg->data.cbegin());
+    if(equal){
+        std::cout << "global path was not updated because global path was not changed" << std::endl;
+        return;
+    }
+    static bool first_flag = true;
     global_path_ids = msg->data;
     global_path_subscribed = true;
-    // reset
-    global_path_index = 0;
+    if(!first_flag){
+        // reset
+        global_path_index = 0;
+    }else{
+        global_path_index = GLOBAL_PATH_INDEX_OFFSET;
+        first_flag = 0;
+    }
     std::cout << "received global path" << std::endl;
 }
 
