@@ -347,10 +347,21 @@ double NodeEdgeNavigator::calculate_practical_edge_progress(const amsl_navigatio
         return EXCESS_DETECTION_RATIO;
     }else if(edge.node0_id == node1_id){
         // exceeded the target node
+        std::cout << "exceeded the target node" << std::endl;
         amsl_navigation_msgs::Edge e;
         nemi.get_edge_from_node_id(node0_id, node1_id, e);
         if(e.distance > 0.0){
             return (edge.progress * edge.distance + e.distance) / e.distance;
+        }else{
+            std::cout << "\033[031medge " << node0_id << " -> " << node1_id << " was not found in map!!!\033[0m" << std::endl;
+            return EXCESS_DETECTION_RATIO;
+        }
+    }else if(edge.node1_id == node0_id && edge.node0_id != node1_id){
+        std::cout << "the target node has been already detected" << std::endl;
+        amsl_navigation_msgs::Edge e;
+        nemi.get_edge_from_node_id(node0_id, node1_id, e);
+        if(e.distance > 0.0){
+            return std::max(0.0, double((edge.progress - 1) * edge.distance) / e.distance);
         }else{
             std::cout << "\033[031medge " << node0_id << " -> " << node1_id << " was not found in map!!!\033[0m" << std::endl;
             return EXCESS_DETECTION_RATIO;
