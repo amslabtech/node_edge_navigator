@@ -10,6 +10,7 @@
     <arg name="robot_frame" default="base_link"/>
     <arg name="goal_dis" default="5.0"/>
     <arg name="global_path_index_offset" default="1"/>
+    <arg name="local_map" default="/local_map"/>
 
     <node pkg="node_edge_navigator" type="node_edge_navigator" name="node_edge_navigator">
         <param name="HZ" value="$(arg hz)"/>
@@ -23,6 +24,7 @@
     </node>
 
     <node pkg="node_edge_navigator" type="local_goal_creator" name="local_goal_creator">
+        <remap from="/local_map" to="$(arg local_map)"/>
     </node>
 
 </launch>
