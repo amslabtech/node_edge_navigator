@@ -11,6 +11,8 @@
     <arg name="goal_dis" default="5.0"/>
     <arg name="global_path_index_offset" default="1"/>
     <arg name="local_map" default="/local_map"/>
+    <arg name="local_goal_angle" default="1.5"/>
+    <arg name="d_local_goal_angle" default="0.3"/>
 
     <node pkg="node_edge_navigator" type="node_edge_navigator" name="node_edge_navigator">
         <param name="HZ" value="$(arg hz)"/>
@@ -24,6 +26,8 @@
     </node>
 
     <node pkg="node_edge_navigator" type="local_goal_creator" name="local_goal_creator">
+        <param name="LOCAL_GOAL_ANGLE" value="$(arg local_goal_angle)"/>
+        <param name="D_LOCAL_GOAL_ANGLE" value="$(arg d_local_goal_angle)"/>
         <remap from="/local_map" to="$(arg local_map)"/>
     </node>
 
