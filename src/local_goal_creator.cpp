@@ -9,11 +9,13 @@ LocalGoalCreator::LocalGoalCreator(void)
 
     map_sub = nh.subscribe("/local_map", 1, &LocalGoalCreator::MapCallback, this);
     target_sub = nh.subscribe("/direction/relative", 1, &LocalGoalCreator::TargetCallback, this);
+    task_server = nh.advertiseService("/local_goal/interruption", &LocalGoalCreator::TaskHandler, this);
 
     local_goal_pub = nh.advertise<geometry_msgs::PoseStamped>("/local_goal",1);
     local_goal_array_pub = nh.advertise<geometry_msgs::PoseArray>("/local_goal/array", 1);
 
     map_received = false;
+    task_flag = false;
 }
 
 float LocalGoalCreator::get_yaw(geometry_msgs::Quaternion q)
@@ -22,6 +24,13 @@ float LocalGoalCreator::get_yaw(geometry_msgs::Quaternion q)
     tf::Quaternion quat(q.x, q.y, q.z, q.w);
     tf::Matrix3x3(quat).getRPY(r, p,y);
     return y;
+}
+
+bool LocalGoalCreator::TaskHandler(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response)
+{
+    task_flag = request.data;
+    response.success = true;
+    return true;
 }
 
 void LocalGoalCreator::MapCallback(const nav_msgs::OccupancyGridConstPtr& msg)
@@ -35,7 +44,7 @@ void LocalGoalCreator::TargetCallback(const geometry_msgs::PoseStampedConstPtr& 
     geometry_msgs::PoseStamped target = *msg;
 
     geometry_msgs::PoseStamped local_goal;
-    if(map_received){
+    if(map_received && !task_flag){
         detection_main(target, local_goal);
         std::cout << "local goal:" << std::endl;
         std::cout << local_goal.pose.position << std::endl;
@@ -116,7 +125,6 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
                 std::cout << "goal_direction: " << goal_direction << std::endl;
             }
         }
-
     }
     goal.pose.position.x = goal_distance * cos(goal_direction);
     goal.pose.position.y = goal_distance * sin(goal_direction);
