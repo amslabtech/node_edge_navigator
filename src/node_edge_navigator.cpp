@@ -132,14 +132,7 @@ void NodeEdgeNavigator::process(void)
                             nemi.get_node_from_id(global_path_ids[global_path_index], target_node);
                         }
                         // caluculate target node direction
-                        double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
-                        double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
-                        target_node_direction = pi_2_pi(target_node_direction);
-                        direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
-                        distance = std::min(GOAL_DISTANCE, distance);
-                        direction.pose.position.x = distance * cos(target_node_direction);
-                        direction.pose.position.y = distance * sin(target_node_direction);
-                        direction.pose.position.z = 0.0;
+                        get_direction_from_positions(estimated_pose.pose.pose.position, target_node.point, direction.pose);
                     }else if(target_node.type == "intersection"){
                         amsl_navigation_msgs::Node last_target_node;
                         nemi.get_node_from_id(last_target_node_id, last_target_node);
@@ -167,14 +160,7 @@ void NodeEdgeNavigator::process(void)
                         progress = std::min(practical_edge_distance, estimated_edge.distance + 3.0) / estimated_edge.distance;
                         if(progress <= EXCESS_DETECTION_RATIO){
                             // caluculate target node direction (intersection)
-                            double global_node_direction = atan2(target_node.point.y - last_target_node.point.y, target_node.point.x - last_target_node.point.x);
-                            std::cout << "edge direction: " << global_node_direction << "[rad]" << std::endl;
-                            double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
-                            target_node_direction = pi_2_pi(target_node_direction);
-                            direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
-                            direction.pose.position.x = GOAL_DISTANCE * cos(target_node_direction);
-                            direction.pose.position.y = GOAL_DISTANCE * sin(target_node_direction);
-                            direction.pose.position.z = 0.0;
+                            get_direction_from_positions(last_target_node.point, target_node.point, direction.pose);
                         }else{
                             std::cout << "\033[033mexcess the target node!!!\033[0m" << std::endl;
                             if(ENABLE_REQUESTING_REPLANNING){
@@ -184,13 +170,7 @@ void NodeEdgeNavigator::process(void)
                                 // caluculate target node direction (position)
                                 std::cout << "back to last node" << std::endl;
                                 appended_position_type_node_list.push_back(target_node.id);
-                                double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
-                                double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
-                                target_node_direction = pi_2_pi(target_node_direction);
-                                direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
-                                direction.pose.position.x = GOAL_DISTANCE * cos(target_node_direction);
-                                direction.pose.position.y = GOAL_DISTANCE * sin(target_node_direction);
-                                direction.pose.position.z = 0.0;
+                                get_direction_from_positions(estimated_pose.pose.pose.position, target_node.point, direction.pose);
                             }
                         }
                     }else if(target_node.type == "intersection,position"){
@@ -219,23 +199,10 @@ void NodeEdgeNavigator::process(void)
                             nemi.get_node_from_id(global_path_ids[global_path_index], target_node);
                         }
                         // caluculate target node direction
-                        double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
-                        double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
-                        target_node_direction = pi_2_pi(target_node_direction);
-                        direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
-                        distance = std::min(GOAL_DISTANCE, distance);
-                        direction.pose.position.x = distance * cos(target_node_direction);
-                        direction.pose.position.y = distance * sin(target_node_direction);
-                        direction.pose.position.z = 0.0;
+                        get_direction_from_positions(estimated_pose.pose.pose.position, target_node.point, direction.pose);
                     }else{
                         // default
-                        double global_node_direction = atan2(target_node.point.y - estimated_pose.pose.pose.position.y, target_node.point.x - estimated_pose.pose.pose.position.x);
-                        double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
-                        target_node_direction = pi_2_pi(target_node_direction);
-                        direction.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
-                        direction.pose.position.x = GOAL_DISTANCE * cos(target_node_direction);
-                        direction.pose.position.y = GOAL_DISTANCE * sin(target_node_direction);
-                        direction.pose.position.z = 0.0;
+                        get_direction_from_positions(estimated_pose.pose.pose.position, target_node.point, direction.pose);
                     }
                     //std::cout << "target node:\n" << target_node << std::endl;
                     std::cout << "direction: " << tf::getYaw(direction.pose.orientation) << "[rad]" << std::endl;
@@ -407,6 +374,19 @@ double NodeEdgeNavigator::calculate_practical_edge_progress(const amsl_navigatio
         return 0;
         // return EXCESS_DETECTION_RATIO;
     }
+}
+
+void NodeEdgeNavigator::get_direction_from_positions(const geometry_msgs::Point& point_from, const geometry_msgs::Point& point_to, geometry_msgs::Pose& direction)
+{
+    double distance = get_distance_from_points(point_to, point_from);
+    double global_node_direction = atan2(point_to.y - point_from.y, point_to.x - point_from.x);
+    double target_node_direction = global_node_direction - tf::getYaw(estimated_pose.pose.pose.orientation);
+    target_node_direction = pi_2_pi(target_node_direction);
+    direction.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, target_node_direction);
+    distance = std::min(GOAL_DISTANCE, distance);
+    direction.position.x = distance * cos(target_node_direction);
+    direction.position.y = distance * sin(target_node_direction);
+    direction.position.z = 0.0;
 }
 
 int main(int argc, char** argv)

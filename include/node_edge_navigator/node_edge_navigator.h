@@ -37,6 +37,7 @@ public:
     double get_distance_from_points(const geometry_msgs::Point&, const geometry_msgs::Point&);
     void check_global_path_with_localization(void);
     double calculate_practical_edge_progress(const amsl_navigation_msgs::Edge&, int, int);
+    void get_direction_from_positions(const geometry_msgs::Point&, const geometry_msgs::Point&, geometry_msgs::Pose&);
 
 private:
     double HZ;
