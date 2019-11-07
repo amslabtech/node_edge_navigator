@@ -13,6 +13,7 @@
     <arg name="local_map" default="/local_map"/>
     <arg name="local_goal_angle" default="1.5"/>
     <arg name="d_local_goal_angle" default="0.3"/>
+    <arg name="excess_detection_distance" default="5.0"/>
 
     <node pkg="node_edge_navigator" type="node_edge_navigator" name="node_edge_navigator">
         <param name="HZ" value="$(arg hz)"/>
@@ -23,6 +24,7 @@
         <param name="ROBOT_FRAME" value="$(arg robot_frame)"/>
         <param name="GOAL_DISTANCE" value="$(arg goal_dis)"/>
         <param name="GLOBAL_PATH_INDEX_OFFSET" value="$(arg global_path_index_offset)"/>
+        <param name="EXCESS_DETECTION_DISTANCE" value="$(arg excess_detection_distance)"/>
     </node>
 
     <node pkg="node_edge_navigator" type="local_goal_creator" name="local_goal_creator">

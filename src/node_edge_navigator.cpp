@@ -22,6 +22,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     private_nh.param("ROBOT_FRAME", ROBOT_FRAME, {"base_link"});
     private_nh.param("GOAL_DISTANCE", GOAL_DISTANCE, {5.0});
     private_nh.param("GLOBAL_PATH_INDEX_OFFSET", GLOBAL_PATH_INDEX_OFFSET, {1});
+    private_nh.param("EXCESS_DETECTION_DISTANCE", EXCESS_DETECTION_DISTANCE, {5.0});
 
     map_subscribed = false;
     global_path_subscribed = false;
@@ -40,6 +41,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     std::cout << "ROBOT_FRAME: " << ROBOT_FRAME << std::endl;
     std::cout << "GOAL_DISTANCE: " << GOAL_DISTANCE << std::endl;
     std::cout << "GLOBAL_PATH_INDEX_OFFSET: " << GLOBAL_PATH_INDEX_OFFSET << std::endl;
+    std::cout << "EXCESS_DETECTION_DISTANCE: " << EXCESS_DETECTION_DISTANCE << std::endl;
     std::cout << std::endl;
 }
 
@@ -156,14 +158,18 @@ void NodeEdgeNavigator::process(void)
                         // excess detection
                         double progress = calculate_practical_edge_progress(estimated_edge, last_target_node_id, target_node.id);
                         std::cout << "practical progress: " << progress << std::endl;
-                        double practical_edge_distance = progress * estimated_edge.distance;
-                        progress = std::min(practical_edge_distance, estimated_edge.distance + 3.0) / estimated_edge.distance;
-                        if(progress <= EXCESS_DETECTION_RATIO){
+                        const double PROGRESS_THRESHOLD = std::min(EXCESS_DETECTION_RATIO, (estimated_edge.distance + EXCESS_DETECTION_DISTANCE) / estimated_edge.distance);
+                        std::cout << "progress threshold: " << PROGRESS_THRESHOLD << std::endl;
+                        if(progress < PROGRESS_THRESHOLD){
                             // caluculate target node direction (intersection)
                             get_direction_from_positions(last_target_node.point, target_node.point, direction.pose);
                         }else{
-                            std::cout << "\033[033mexcess the target node!!!\033[0m" << std::endl;
-                            if(ENABLE_REQUESTING_REPLANNING){
+                            std::cout << "\033[033mexceeded the target node!!!\033[0m" << std::endl;
+                            if(is_ignorable_node()){
+                                std::cout << "this node is ignorable" << std::endl;
+                                arrived_at_node();
+                                get_direction_from_positions(last_target_node.point, target_node.point, direction.pose);
+                            }else if(ENABLE_REQUESTING_REPLANNING){
                                 std::cout << "request replanning" << std::endl;
                                 request_replanning();
                             }else{
@@ -387,6 +393,29 @@ void NodeEdgeNavigator::get_direction_from_positions(const geometry_msgs::Point&
     direction.position.x = distance * cos(target_node_direction);
     direction.position.y = distance * sin(target_node_direction);
     direction.position.z = 0.0;
+}
+
+bool NodeEdgeNavigator::is_ignorable_node(void)
+{
+    int global_path_ids_size = global_path_ids.size();
+    if(global_path_index - 1 >= 0 && global_path_index + 1 < global_path_ids_size){
+        amsl_navigation_msgs::Node last_target_node;
+        nemi.get_node_from_id(global_path_ids[global_path_index - 1], last_target_node);
+        amsl_navigation_msgs::Node current_target_node;
+        nemi.get_node_from_id(global_path_ids[global_path_index], current_target_node);
+        amsl_navigation_msgs::Node next_target_node;
+        nemi.get_node_from_id(global_path_ids[global_path_index + 1], next_target_node);
+        double direction_last = atan2(current_target_node.point.y - last_target_node.point.y, current_target_node.point.x - last_target_node.point.x);
+        double direction_next = atan2(next_target_node.point.y - current_target_node.point.y, next_target_node.point.x - current_target_node.point.x);
+        double direction_diff = pi_2_pi(direction_next - direction_last);
+        std::cout << "direction " << last_target_node.id << " -> " << current_target_node.id << " -> " << next_target_node.id << " : " << direction_diff << "[rad]" << std::endl;
+        if(fabs(direction_diff) < M_PI / 6.0){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    return false;
 }
 
 int main(int argc, char** argv)
