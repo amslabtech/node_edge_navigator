@@ -26,7 +26,6 @@ private:
 
     ros::Subscriber map_sub;
     ros::Subscriber target_sub;
-    ros::Subscriber task_sub;
     ros::Publisher local_goal_pub;
     ros::Publisher local_goal_array_pub;
     ros::ServiceServer task_server;
