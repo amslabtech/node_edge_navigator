@@ -8,11 +8,11 @@
     <arg name="enable_requesting_replanning" default="false"/>
     <arg name="intersection_acceptance_progress_ratio" default="0.7"/>
     <arg name="robot_frame" default="base_link"/>
-    <arg name="goal_dis" default="5.0"/>
+    <arg name="goal_dis" default="2.0"/>
     <arg name="global_path_index_offset" default="1"/>
     <arg name="local_map" default="/local_map"/>
-    <arg name="local_goal_angle" default="1.5"/>
-    <arg name="d_local_goal_angle" default="0.3"/>
+    <arg name="local_goal_angle" default="2.0"/>
+    <arg name="d_local_goal_angle" default="0.4"/>
     <arg name="excess_detection_distance" default="5.0"/>
 
     <node pkg="node_edge_navigator" type="node_edge_navigator" name="node_edge_navigator">
