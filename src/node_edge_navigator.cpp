@@ -211,6 +211,19 @@ void NodeEdgeNavigator::process(void)
                         get_direction_from_positions(estimated_pose.pose.pose.position, target_node.point, direction.pose);
                     }
                     //std::cout << "target node:\n" << target_node << std::endl;
+
+                    {
+                        double distance = get_distance_from_points(target_node.point, estimated_pose.pose.pose.position);
+                        double start_of_approaching_time = ros::Time::now().toSec();
+                        if(distance < GOAL_RADIUS * 5){
+                            double approaching_time = ros::Time::now().toSec() - start_of_approaching_time;
+                            if(approaching_time > 170.0){
+                                arrived_at_node();
+                            }
+                        }else{
+                            start_of_approaching_time = ros::Time::now().toSec();
+                        }
+                    }
                     std::cout << "direction: " << tf::getYaw(direction.pose.orientation) << "[rad]" << std::endl;
                     direction.header.frame_id = ROBOT_FRAME;
                     direction.header.stamp = estimated_pose.header.stamp;
