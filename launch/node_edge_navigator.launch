@@ -14,6 +14,7 @@
     <arg name="local_goal_angle" default="2.0"/>
     <arg name="d_local_goal_angle" default="0.4"/>
     <arg name="excess_detection_distance" default="5.0"/>
+    <arg name="timeout" default="170.0"/>
 
     <node pkg="node_edge_navigator" type="node_edge_navigator" name="node_edge_navigator">
         <param name="HZ" value="$(arg hz)"/>
@@ -25,6 +26,7 @@
         <param name="GOAL_DISTANCE" value="$(arg goal_dis)"/>
         <param name="GLOBAL_PATH_INDEX_OFFSET" value="$(arg global_path_index_offset)"/>
         <param name="EXCESS_DETECTION_DISTANCE" value="$(arg excess_detection_distance)"/>
+        <param name="TIMEOUT" value="$(arg timeout)"/>
     </node>
 
     <node pkg="node_edge_navigator" type="local_goal_creator" name="local_goal_creator">

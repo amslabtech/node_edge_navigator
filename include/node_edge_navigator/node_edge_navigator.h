@@ -50,6 +50,7 @@ private:
     double GOAL_DISTANCE;
     int GLOBAL_PATH_INDEX_OFFSET;
     double EXCESS_DETECTION_DISTANCE;
+    double TIMEOUT;
 
     ros::NodeHandle nh;
     ros::NodeHandle private_nh;

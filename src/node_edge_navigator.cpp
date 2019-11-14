@@ -23,6 +23,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     private_nh.param("GOAL_DISTANCE", GOAL_DISTANCE, {5.0});
     private_nh.param("GLOBAL_PATH_INDEX_OFFSET", GLOBAL_PATH_INDEX_OFFSET, {1});
     private_nh.param("EXCESS_DETECTION_DISTANCE", EXCESS_DETECTION_DISTANCE, {5.0});
+    private_nh.param("TIMEOUT", TIMEOUT, {170.0});
 
     map_subscribed = false;
     global_path_subscribed = false;
@@ -42,6 +43,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
     std::cout << "GOAL_DISTANCE: " << GOAL_DISTANCE << std::endl;
     std::cout << "GLOBAL_PATH_INDEX_OFFSET: " << GLOBAL_PATH_INDEX_OFFSET << std::endl;
     std::cout << "EXCESS_DETECTION_DISTANCE: " << EXCESS_DETECTION_DISTANCE << std::endl;
+    std::cout << "TIMEOUT: " << TIMEOUT << std::endl;
     std::cout << std::endl;
 }
 
@@ -217,7 +219,7 @@ void NodeEdgeNavigator::process(void)
                         double start_of_approaching_time = ros::Time::now().toSec();
                         if(distance < GOAL_RADIUS * 5){
                             double approaching_time = ros::Time::now().toSec() - start_of_approaching_time;
-                            if(approaching_time > 170.0){
+                            if(approaching_time > TIMEOUT){
                                 arrived_at_node();
                             }
                         }else{
