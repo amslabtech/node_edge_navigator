@@ -39,6 +39,8 @@ public:
     double calculate_practical_edge_progress(const amsl_navigation_msgs::Edge&, int, int);
     void get_direction_from_positions(const geometry_msgs::Point&, const geometry_msgs::Point&, geometry_msgs::Pose&);
     bool is_ignorable_node(void);
+    bool is_node_with_linear_edges(void);
+    bool is_node_with_end_of_road(void);
 
 private:
     double HZ;
