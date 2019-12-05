@@ -445,9 +445,6 @@ bool NodeEdgeNavigator::is_node_with_end_of_road(void)
     int global_path_ids_size = global_path_ids.size();
     if(global_path_index < global_path_ids_size - 1){
         std::cout << "estimated edge direction: " << estimated_edge.direction << "[rad]" << std::endl;
-        double reversed_current_edge_direction = estimated_edge.direction - M_PI;
-        reversed_current_edge_direction = atan2(sin(reversed_current_edge_direction), cos(reversed_current_edge_direction));
-        std::cout << "reversed current edge direction: " << reversed_current_edge_direction << "[rad]" << std::endl;
         std::vector<double> edge_directions;
         nemi.get_edge_directions_from_node_id(global_path_ids[global_path_index], edge_directions);
         int edge_num = edge_directions.size();
@@ -458,7 +455,7 @@ bool NodeEdgeNavigator::is_node_with_end_of_road(void)
         std::cout << "extract linear edge" << std::endl;
         for(int i=0;i<edge_num;i++){
             std::cout << "edge_directions[" << i << "]: " << edge_directions[i] << "[rad]" << std::endl;
-            double direction_diff = reversed_current_edge_direction - edge_directions[i];
+            double direction_diff = estimated_edge.direction - edge_directions[i];
             direction_diff = fabs(atan2(sin(direction_diff), cos(direction_diff)));
             std::cout << "direction_diff: " << direction_diff << std::endl;
             if(min_direction_diff > direction_diff){
@@ -468,6 +465,7 @@ bool NodeEdgeNavigator::is_node_with_end_of_road(void)
         std::cout << "min_direction_diff: " << min_direction_diff << std::endl;
         if(min_direction_diff > M_PI / 6.0){
             std::cout << "the target node is end of road" << std::endl;
+            return true;
         }
     }
     return false;
