@@ -5,6 +5,7 @@ NodeEdgeNavigator::NodeEdgeNavigator(void)
 {
     direction_pub = nh.advertise<geometry_msgs::PoseStamped>("/direction/relative", 1);
     goal_flag_pub = private_nh.advertise<std_msgs::Empty>("goal_flag", 1);
+    next_intersection_shape_pub = private_nh.advertise<visualization_msgs::Marker>("next_intersection_shape", 1);
     map_sub = nh.subscribe("/node_edge_map/map", 1, &NodeEdgeNavigator::map_callback, this);
     path_sub = nh.subscribe("/global_path/path", 1, &NodeEdgeNavigator::path_callback, this);
     pose_sub = nh.subscribe("/estimated_pose/pose", 1, &NodeEdgeNavigator::pose_callback, this);
@@ -230,6 +231,8 @@ void NodeEdgeNavigator::process(void)
                     direction.header.frame_id = ROBOT_FRAME;
                     direction.header.stamp = estimated_pose.header.stamp;
                     direction_pub.publish(direction);
+
+                    publish_next_intersection_shape(global_path_ids[global_path_index]);
 
                     pose_updated = false;
                     edge_updated = false;
@@ -469,6 +472,37 @@ bool NodeEdgeNavigator::is_node_with_end_of_road(void)
         }
     }
     return false;
+}
+
+void NodeEdgeNavigator::publish_next_intersection_shape(int node_id)
+{
+    visualization_msgs::Marker shape;
+    shape.header = estimated_pose.header;
+    shape.type = visualization_msgs::Marker::LINE_LIST;
+    shape.action = visualization_msgs::Marker::ADD;
+    shape.ns = "next_intersection_shape";
+    shape.pose.position = estimated_pose.pose.pose.position;
+    shape.pose.orientation = tf::createQuaternionMsgFromYaw(0);
+    shape.lifetime = ros::Duration(0);
+    shape.color.r = 1;
+    shape.color.g = 1;
+    shape.color.a = 1;
+    shape.scale.x = 0.2;
+    std::vector<double> directions;
+    nemi.get_edge_directions_from_node_id(node_id, directions);
+    int direction_num = directions.size();
+    for(int i=0;i<direction_num;i++){
+        geometry_msgs::Point p;
+        p.x = 0;
+        p.y = 0;
+        p.z = 0;
+        shape.points.push_back(p);
+        p.x = cos(directions[i]);
+        p.y = sin(directions[i]);
+        p.z = 0;
+        shape.points.push_back(p);
+    }
+    next_intersection_shape_pub.publish(shape);
 }
 
 int main(int argc, char** argv)

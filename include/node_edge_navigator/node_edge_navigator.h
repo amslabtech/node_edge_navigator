@@ -11,6 +11,7 @@
 #include <std_msgs/Int32MultiArray.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
+#include <visualization_msgs/Marker.h>
 
 #include "amsl_navigation_msgs/Node.h"
 #include "amsl_navigation_msgs/Edge.h"
@@ -41,6 +42,7 @@ public:
     bool is_ignorable_node(void);
     bool is_node_with_linear_edges(void);
     bool is_node_with_end_of_road(void);
+    void publish_next_intersection_shape(int);
 
 private:
     double HZ;
@@ -59,6 +61,7 @@ private:
 
     ros::Publisher direction_pub;
     ros::Publisher goal_flag_pub;
+    ros::Publisher next_intersection_shape_pub;
     ros::Subscriber map_sub;
     ros::Subscriber path_sub;
     ros::Subscriber pose_sub;
