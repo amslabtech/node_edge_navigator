@@ -166,15 +166,26 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
                 if(!((_i == n_i) && (_j == n_j))){
                     if(_i>=0 && _i<grid_width_ && _j>=0 && _j<grid_width_){
                         const int _index = _j * grid_width_ + _i;
-                        grid_cells_[_index].step_ = grid_cells_[n_index].step_ + 1;
                         // ROS_INFO_STREAM("_i, _j: " << _i << ", " << _j);
+                        const int g_score = grid_cells_[n_index].step_ + 1;
+                        const int f_score = grid_cells_[_index].cost_ + grid_cells_[_index].step_ + get_heuristic(goal_i-_i, goal_j-_j);
                         if(!is_contained(open_list_, _index) && !is_contained(close_list_, _index)){
                             if(!grid_cells_[_index].is_wall_){
                                 // ROS_INFO("=== open ===");
-                                grid_cells_[_index].sum_ = grid_cells_[_index].cost_ + grid_cells_[_index].step_ + get_heuristic(goal_i-_i, goal_j-_j);
+                                grid_cells_[_index].step_ = g_score;
+                                grid_cells_[_index].sum_ = f_score;
                                 grid_cells_[_index].parent_index_ = n_index;
                                 open_list_.push_back(_index);
                             }
+                        }else if(is_contained(open_list_, _index)){
+                            if(grid_cells_[_index].sum_ > f_score){
+                                grid_cells_[_index].sum_ = f_score;
+                                grid_cells_[_index].step_ = g_score;
+                                grid_cells_[_index].parent_index_ = n_index;
+                            }
+                        }else if(is_contained(close_list_, _index)){
+                            continue;
+                        }
                     }
                 }
             }
