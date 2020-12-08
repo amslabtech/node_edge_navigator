@@ -32,7 +32,9 @@
     <node pkg="node_edge_navigator" type="local_goal_creator" name="local_goal_creator">
         <param name="LOCAL_GOAL_ANGLE" value="$(arg local_goal_angle)"/>
         <param name="D_LOCAL_GOAL_ANGLE" value="$(arg d_local_goal_angle)"/>
+        <param name="GOAL_DIS" value="$(arg goal_dis)"/>
         <remap from="/local_map" to="$(arg local_map)"/>
+        <remap from="/local_map" to="/local_map/expand"/>
     </node>
 
 </launch>
