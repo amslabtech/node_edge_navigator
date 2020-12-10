@@ -124,6 +124,10 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
     open_list_.push_back(start_index);
     grid_cells_[open_list_[0]].sum_ = grid_cells_[open_list_[0]].step_ + get_heuristic(start_i - goal_i, start_j - goal_j);
 
+    if(grid_cells_[goal_index].is_wall_){
+        ROS_WARN("the goal is in an obstacle");
+    }
+
     int count = 0;
 
     while(ros::ok()){
