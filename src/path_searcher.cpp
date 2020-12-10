@@ -104,9 +104,6 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
         grid_cells_[i].sum_ = -1;
         grid_cells_[i].parent_index_ = -1;
         grid_cells_[i].step_ = 0;
-        if(grid_cells_[i].is_wall_){
-            grid_cells_[i].cost_ = 100;
-        }
     }
 
     const unsigned int start_index = get_index_from_xy(start(0), start(1));
@@ -174,13 +171,11 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
                         const int g_score = grid_cells_[n_index].step_ + 1;
                         const int f_score = grid_cells_[_index].cost_ + grid_cells_[_index].step_ + get_heuristic(goal_i-_i, goal_j-_j);
                         if(!is_contained(open_list_, _index) && !is_contained(close_list_, _index)){
-                            if(!grid_cells_[_index].is_wall_){
-                                // ROS_INFO("=== open ===");
-                                grid_cells_[_index].step_ = g_score;
-                                grid_cells_[_index].sum_ = f_score;
-                                grid_cells_[_index].parent_index_ = n_index;
-                                open_list_.push_back(_index);
-                            }
+                            // ROS_INFO("=== open ===");
+                            grid_cells_[_index].step_ = g_score;
+                            grid_cells_[_index].sum_ = f_score;
+                            grid_cells_[_index].parent_index_ = n_index;
+                            open_list_.push_back(_index);
                         }else if(is_contained(open_list_, _index)){
                             if(grid_cells_[_index].sum_ > f_score){
                                 grid_cells_[_index].sum_ = f_score;
