@@ -152,7 +152,7 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
         }
         // choose a node with minimum cost from open list
         unsigned int n_index = open_list_[0];
-        int n = grid_cells_[n_index].sum_;
+        double n = grid_cells_[n_index].sum_;
         for(unsigned int i=0;i<open_list_.size();i++){
             if(grid_cells_[open_list_[i]].sum_ < n){
                 n_index = open_list_[i];
@@ -180,7 +180,7 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
                         const int _index = _j * grid_width_ + _i;
                         // ROS_INFO_STREAM("_i, _j: " << _i << ", " << _j);
                         const int g_score = grid_cells_[n_index].step_ + 1;
-                        const int f_score = grid_cells_[_index].cost_ + grid_cells_[_index].step_ + get_heuristic(goal_i-_i, goal_j-_j);
+                        const double f_score = grid_cells_[_index].cost_ + grid_cells_[_index].step_ + get_heuristic(goal_i-_i, goal_j-_j);
                         if(!is_contained(open_list_, _index) && !is_contained(close_list_, _index)){
                             // ROS_INFO("=== open ===");
                             grid_cells_[_index].step_ = g_score;
@@ -188,7 +188,7 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
                             grid_cells_[_index].parent_index_ = n_index;
                             open_list_.push_back(_index);
                         }else if(is_contained(open_list_, _index)){
-                            if(grid_cells_[_index].sum_ > f_score){
+                            if(grid_cells_[_index].step_ > g_score){
                                 grid_cells_[_index].sum_ = f_score;
                                 grid_cells_[_index].step_ = g_score;
                                 grid_cells_[_index].parent_index_ = n_index;
@@ -286,7 +286,7 @@ bool PathSearcher::is_contained(const std::vector<int>& vec, int value)
     return std::find(vec.begin(), vec.end(), value) != vec.end();
 }
 
-int PathSearcher::get_heuristic(int diff_x, int diff_y)
+double PathSearcher::get_heuristic(int diff_x, int diff_y)
 {
     return sqrt(diff_x * diff_x + diff_y * diff_y);
 }

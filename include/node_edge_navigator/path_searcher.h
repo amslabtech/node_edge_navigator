@@ -31,7 +31,7 @@ public:
     double get_y_index_from_y(const double y);
     bool is_valid_point(int ix, int iy);
     bool is_contained(const std::vector<int>& vec, int value);
-    int get_heuristic(int diff_x, int diff_y);
+    double get_heuristic(int diff_x, int diff_y);
 
     class GridCell
     {
@@ -46,7 +46,7 @@ public:
         }
         int cost_;
         int step_;
-        int sum_;
+        double sum_;
         int parent_index_;
         bool is_wall_;
     };
