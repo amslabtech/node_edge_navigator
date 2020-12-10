@@ -216,11 +216,11 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
         path_pose.pose.position.y = get_y_from_index(path_index);
         // path_pose.pose.orientation = _goal.pose.orientation;
         path_pose.pose.orientation.w = 1;
-        ROS_INFO_STREAM(path_pose.pose.position.x << ", " << path_pose.pose.position.y << ", " << path_index << ", " << grid_cells_[path_index].cost_);
-        ROS_INFO_STREAM(grid_cells_[path_index].cost_);
+        // ROS_INFO_STREAM(path_pose.pose.position.x << ", " << path_pose.pose.position.y << ", " << path_index << ", " << grid_cells_[path_index].cost_);
+        // ROS_INFO_STREAM(grid_cells_[path_index].cost_);
         temp_path.poses.push_back(path_pose);
         path_index = grid_cells_[path_index].parent_index_;
-        ROS_INFO_STREAM("next:" << path_index);
+        // ROS_INFO_STREAM("next:" << path_index);
         if(path_index < 0){
             std::reverse(temp_path.poses.begin(), temp_path.poses.end());
             output = temp_path;
