@@ -27,6 +27,8 @@ public:
     int get_y_index_from_index(const int index);
     double get_x_from_index(const int index);
     double get_y_from_index(const int index);
+    double get_x_index_from_x(const double x);
+    double get_y_index_from_y(const double y);
     bool is_valid_point(int ix, int iy);
     bool is_contained(const std::vector<int>& vec, int value);
     int get_heuristic(int diff_x, int diff_y);

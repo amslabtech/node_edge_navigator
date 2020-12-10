@@ -59,7 +59,11 @@ void PathSearcher::map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
     const Eigen::Vector2d goal(subgoal.pose.position.x, subgoal.pose.position.y);
     nav_msgs::Path path;
     ROS_INFO("calculate path");
-    calculate_path(start, goal, path);
+    const double cost = calculate_path(start, goal, path);
+    if(cost >= 1e4){
+        ROS_WARN("failed to generate a path");
+        return;
+    }
     path_pub_.publish(path);
 
     if(!path.poses.empty()){
@@ -107,17 +111,24 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
     }
 
     const unsigned int start_index = get_index_from_xy(start(0), start(1));
-    const unsigned int start_i = get_x_index_from_index(start_index);
-    const unsigned int start_j = get_y_index_from_index(start_index);
+    const unsigned int start_i = get_x_index_from_x(start(0));
+    const unsigned int start_j = get_y_index_from_y(start(1));
     const unsigned int goal_index = get_index_from_xy(goal(0), goal(1));
-    const unsigned int goal_i = get_x_index_from_index(goal_index);
-    const unsigned int goal_j = get_y_index_from_index(goal_index);
+    const unsigned int goal_i = get_x_index_from_x(goal(0));
+    const unsigned int goal_j = get_y_index_from_y(goal(1));
     ROS_INFO("calculating path");
     ROS_INFO_STREAM("from " << start(0) << ", " << start(1) << ", " << start_index);
     ROS_INFO_STREAM(start_i << ", " << start_j);
     ROS_INFO_STREAM("to " << goal(0) << ", " << goal(1) << ", " << goal_index);
     ROS_INFO_STREAM(goal_i << ", " << goal_j);
-    ROS_INFO_STREAM(get_x_from_index(goal_index) << ", " << get_y_from_index(goal_index));
+    if(!is_valid_point(start_i, start_j)){
+        ROS_ERROR_STREAM("given start " << start.transpose() << " is out of the map");
+        return std::numeric_limits<double>::max();
+    }
+    if(!is_valid_point(goal_i, goal_j)){
+        ROS_ERROR_STREAM("given goal " << goal.transpose() << " is out of the map");
+        return std::numeric_limits<double>::max();
+    }
     open_list_.push_back(start_index);
     grid_cells_[open_list_[0]].sum_ = grid_cells_[open_list_[0]].step_ + get_heuristic(start_i - goal_i, start_j - goal_j);
 
@@ -225,9 +236,9 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
 
 int PathSearcher::get_index_from_xy(const double x, const double y)
 {
-    const int _x = floor(x / resolution_ + 0.5) + grid_width_2_;
-    const int _y = floor(y / resolution_ + 0.5) + grid_width_2_;
-    return _y * grid_width_ + _x;
+    const int xi = get_x_index_from_x(x);
+    const int yi = get_y_index_from_y(y);
+    return yi * grid_width_ + xi;
 }
 
 int PathSearcher::get_x_index_from_index(const int index)
@@ -248,6 +259,16 @@ double PathSearcher::get_x_from_index(const int index)
 double PathSearcher::get_y_from_index(const int index)
 {
     return (get_y_index_from_index(index) - grid_width_2_) * resolution_;
+}
+
+double PathSearcher::get_x_index_from_x(const double x)
+{
+    return std::floor(x / resolution_ + 0.5) + grid_width_2_;
+}
+
+double PathSearcher::get_y_index_from_y(const double y)
+{
+    return std::floor(y / resolution_ + 0.5) + grid_width_2_;
 }
 
 bool PathSearcher::is_valid_point(int ix, int iy)
