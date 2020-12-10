@@ -15,8 +15,11 @@ find_package(catkin REQUIRED COMPONENTS
   amsl_navigation_msgs
   amsl_navigation_managers
   tf
+  tf2
+  tf2_ros
 )
 
+find_package(Eigen3 REQUIRED COMPONENTS system)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -122,6 +125,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -140,6 +144,7 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/node_edge_navigator_node.cpp)
 add_executable(node_edge_navigator src/node_edge_navigator.cpp)
 add_executable(local_goal_creator src/local_goal_creator.cpp)
+add_executable(path_searcher src/path_searcher.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -152,6 +157,7 @@ add_executable(local_goal_creator src/local_goal_creator.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(node_edge_navigator amsl_navigation_msgs_generate_messages_cpp)
 add_dependencies(local_goal_creator amsl_navigation_msgs_generate_messages_cpp)
+add_dependencies(path_searcher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -161,6 +167,9 @@ target_link_libraries(node_edge_navigator
     ${catkin_LIBRARIES}
 )
 target_link_libraries(local_goal_creator
+    ${catkin_LIBRARIES}
+)
+target_link_libraries(path_searcher
     ${catkin_LIBRARIES}
 )
 
