@@ -71,7 +71,8 @@ void PathSearcher::map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
         geometry_msgs::PoseStamped local_goal = path.poses[0];
         for(const auto& p : path.poses){
             const Eigen::Vector2d v(p.pose.position.x, p.pose.position.y);
-            if(v.norm() < goal_range_){
+            const unsigned int index = get_index_from_xy(v(0), v(1));
+            if(v.norm() < goal_range_ && !grid_cells_[index].is_wall_){
                 local_goal = p;
             }else{
                 break;
