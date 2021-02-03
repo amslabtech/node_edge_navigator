@@ -62,6 +62,7 @@ void PathSearcher::map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
     const double cost = calculate_path(start, goal, path);
     if(cost >= 1e4){
         ROS_WARN("failed to generate a path");
+        goal_pub_.publish(subgoal_);
         return;
     }
     path_pub_.publish(path);
