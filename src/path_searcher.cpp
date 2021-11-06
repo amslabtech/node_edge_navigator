@@ -13,6 +13,7 @@ PathSearcher::PathSearcher(void)
 
     local_nh_.param<double>("goal_range", goal_range_, 3.0);
     local_nh_.param<std::string>("fixed_frame", fixed_frame_, "map");
+    local_nh_.param<double>("max_count", max_count_, {10000});
     subgoal_received_ = false;
 }
 
@@ -148,9 +149,9 @@ double PathSearcher::calculate_path(const Eigen::Vector2d& start, const Eigen::V
         // const double loop_start_time = ros::Time::now().toSec();
 
         count++;
-        if(count > 10000){
-            ROS_ERROR("count > 10000");
-            return 10000;
+        if(count > max_count_){
+            ROS_ERROR_STREAM("count > "<<max_count_);
+            return max_count_;
         }
         // choose a node with minimum cost from open list
         unsigned int n_index = open_list_[0];

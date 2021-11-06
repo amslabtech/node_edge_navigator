@@ -73,6 +73,7 @@ protected:
     std::vector<int> close_list_;
     geometry_msgs::PoseStamped subgoal_;
     bool subgoal_received_;
+    double max_count_;
 };
 
 }// namespace node_edge_navigator
