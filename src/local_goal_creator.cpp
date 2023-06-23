@@ -60,20 +60,23 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
     goal.header = local_map.header;
     double target_distance = sqrt(target.pose.position.x * target.pose.position.x + target.pose.position.y * target.pose.position.y);
     std::cout << "target distance: " << target_distance << std::endl;
+
     double target_orientation = get_yaw(target.pose.orientation);
     std::cout << "target direction\n" << target_orientation << std::endl;
-    const int ANGLE_SAMPLE_NUM = 2 * round(LOCAL_GOAL_ANGLE / D_LOCAL_GOAL_ANGLE) + 1;
+
+    const int ANGLE_SAMPLE_NUM = 2 * round(LOCAL_GOAL_ANGLE / D_LOCAL_GOAL_ANGLE) + 1;  // Number of samples to see obstacles in the vicinity, 2*(60/10)+1 = 13
     double goal_distance = 0;
     double goal_direction = 1e6;
     std::cout << "ANGLE_SAMPLE_NUM: " << ANGLE_SAMPLE_NUM << std::endl;
+
     if(ANGLE_SAMPLE_NUM > 0){
-        geometry_msgs::PoseArray local_goal_array;
-        local_goal_array.header = goal.header;
-        for(int i=0;i<ANGLE_SAMPLE_NUM;i++){
-            double angle = -LOCAL_GOAL_ANGLE + i * D_LOCAL_GOAL_ANGLE + target_orientation;
+        geometry_msgs::PoseArray local_goal_array;  // local_goal_array = Pose[] (Pose is position and Quaternion)
+        local_goal_array.header = goal.header;      // goal = local_goal
+        for(int i=0;i<ANGLE_SAMPLE_NUM;i++){        // Checking the distance to obstacles around the target node, Repeat until i=12
+            double angle = -LOCAL_GOAL_ANGLE + i * D_LOCAL_GOAL_ANGLE + target_orientation;  // -60 + i*10 + target_node
             std::cout << "angle: " << angle << std::endl;
             double distance = 0;
-            for(;distance<=target_distance;distance+=local_map.info.resolution){
+            for(;distance<=target_distance;distance+=local_map.info.resolution){             // Distance is defined as the distance to 1grid before the obstacle
                 int x_grid = round((distance * cos(angle) - local_map.info.origin.position.x) / local_map.info.resolution);
                 int y_grid = round((distance * sin(angle) - local_map.info.origin.position.y) / local_map.info.resolution);
                 if(local_map.data[x_grid + local_map.info.width * y_grid] != 0){
@@ -81,20 +84,23 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
                     break;
                 }
             }
+
             geometry_msgs::Pose p;
             p.position.x = distance * cos(angle);
             p.position.y = distance * sin(angle);
-            p.orientation = tf::createQuaternionMsgFromYaw(angle);
-            local_goal_array.poses.push_back(p);
+            p.orientation = tf::createQuaternionMsgFromYaw(angle);  // Create quaternion from yaw data
+            local_goal_array.poses.push_back(p);                    // Put p from behind the local goal array
             std::cout << "distance: " << distance << std::endl;
-            if(goal_distance < distance){
+
+            // Updating local goal, Initial goal_distance is 0
+            if(goal_distance < distance){  // Make goal_distance longer
                 goal_distance = distance;
                 goal_direction = angle;
                 std::cout << "updated!" << std::endl;
                 std::cout << "goal_distance: " << goal_distance << std::endl;
                 std::cout << "goal_direction: " << goal_direction << std::endl;
             }else if(goal_distance == distance){
-                if(fabs(goal_direction - target_orientation) > fabs(angle - target_orientation)){
+                if(fabs(goal_direction - target_orientation) > fabs(angle - target_orientation)){  // Make goal_direction smaller
                     goal_direction = angle;
                     std::cout << "updated!" << std::endl;
                     std::cout << "goal_distance: " << goal_distance << std::endl;
@@ -102,11 +108,13 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
                 }
             }
         }
-        local_goal_array_pub.publish(local_goal_array);
-    }else{
+        local_goal_array_pub.publish(local_goal_array);  // local goal array is also published
+    }else{                                               // ANGLE_SAMPLE_NUM <= 0, This else statement is not much different from the above
         double angle = target_orientation;
         std::cout << "angle: " << angle << std::endl;
+
         double distance = 0;
+
         for(;distance<=target_distance;distance+=local_map.info.resolution){
             int x_grid = round((distance * cos(angle) - local_map.info.origin.position.x) / local_map.info.resolution);
             int y_grid = round((distance * sin(angle) - local_map.info.origin.position.y) / local_map.info.resolution);
@@ -116,6 +124,7 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
             }
         }
         std::cout << "distance: " << distance << std::endl;
+
         if(goal_distance <= distance){
             if(fabs(goal_direction - target_orientation) > fabs(angle - target_orientation)){
                 goal_distance = distance;
@@ -126,6 +135,7 @@ void LocalGoalCreator::detection_main(const geometry_msgs::PoseStamped& target, 
             }
         }
     }
+
     goal.pose.position.x = goal_distance * cos(goal_direction);
     goal.pose.position.y = goal_distance * sin(goal_direction);
     goal.pose.position.z = 0.0;
